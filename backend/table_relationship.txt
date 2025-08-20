@@ -1,0 +1,18 @@
+Subject          ←─┐
+├─ id              │
+├─ name            │
+└─ color           │
+                   │ ForeignKey
+StudySession       │
+├─ subject_id ─────┘
+├─ start_time
+└─ end_time
+
+Habit            ←─┐
+├─ id              │  
+├─ name            │
+└─ target_frequency│
+                   │ ForeignKey
+HabitLog           │
+├─ habit_id ───────┘
+└─ completed_date
