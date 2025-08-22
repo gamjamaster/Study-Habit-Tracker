@@ -8,12 +8,16 @@ from database import get_db, create_tables
 from models import Subject, StudySession, Habit, HabitLog
 import schemas
 
+from habit import router as habit_router
+
 #main object of the web api server
 app = FastAPI(
     title = "Study Habit Tracker",
     description = "API that Tracks and analyzes study habits",
     version = "1.0.0"
 ) 
+
+app.include_router(habit_router)
 
 app.add_middleware(
     CORSMiddleware, # CORS => web browser security protocol
