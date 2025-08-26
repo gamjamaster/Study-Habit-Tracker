@@ -1,47 +1,53 @@
 "use client";
-import React from "react";
+
+import { ChartBarIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import WeeklyChart from "@/components/WeeklyChart";
 
-export default function DashboardPage() { // making DashboardPage function component
-  // using dummy data for now
-  // study time constants/variables
-  const todayStudyMinutes = 120; // today's study time in minutes (dummy)
-  const todayStudyGoal = 180; // today's study goal in minutes (dummy)
-  const studyPercent = Math.round((todayStudyMinutes/todayStudyGoal)*100); // today's goal achieving percentage
+// dummy data
+const studyStats = { today: 120, goal: 180, percent: Math.round((120 / 180) * 100) };
+const habitStats = { done: 4, total: 5, percent: Math.round((4 / 5) * 100) };
 
-  // habit constants/variables
-  const todayHabitDone = 4; // nuber of habits accomplished today (dummy)
-  const todayHabitTotal = 5; // number of habits to be accomplished today (dummy)
-  const habitPercent = Math.round((todayHabitDone / todayHabitTotal) * 100); // habit percentage
-
-  
+export default function DashboardPage() {
   return (
-    <section className = "max-w-2xl mx-auto px-4 py-8">
-      <h1 className = "text-2xl font-bold mb-4">대시보드</h1>
+    <section>
+      {/* dashboard title */}
+      <h1 className="text-3xl font-bold mb-8 text-gray-900">Dashboard</h1>
 
-      {/* today's study details*/}
-      <div className = "mb-4 p-4 bg-blue-50 rounded shadow flex justify-between items-center">
-        <div>
-          <div className = "font-semibold">Study Details</div>
-          <div className = "text-3xl">{todayStudyMinutes}minutes <span className = "text-base">/ {todayStudyGoal}minutes</span></div>
+      {/* today's study time/habit summary */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {/* study card */}
+        <div className="bg-white rounded-xl shadow p-6 flex items-center gap-5">
+          <div className="bg-primary-500/10 rounded-full p-3">
+            <ChartBarIcon className="w-8 h-8 text-primary-500" />
+          </div>
+          <div>
+            <div className="text-lg font-medium text-gray-500">Today's Study Time</div>
+            <div className="text-3xl font-bold text-gray-900">
+              {studyStats.today} <span className="text-base text-gray-400">/ {studyStats.goal} minutes</span>
+            </div>
+            <div className="mt-1 text-primary-500 font-semibold">{studyStats.percent}% Achieved</div>
+          </div>
         </div>
-        <div className = "text-blue-600 font-bold text-xl">{studyPercent}%</div>
+        {/* habit card */}
+        <div className="bg-white rounded-xl shadow p-6 flex items-center gap-5">
+          <div className="bg-green-500/10 rounded-full p-3">
+            <CheckCircleIcon className="w-8 h-8 text-green-500" />
+          </div>
+          <div>
+            <div className="text-lg font-medium text-gray-500">Today's Achieved Habit</div>
+            <div className="text-3xl font-bold text-gray-900">
+              {habitStats.done} <span className="text-base text-gray-400">/ {habitStats.total} habits</span>
+            </div>
+            <div className="mt-1 text-green-500 font-semibold">{habitStats.percent}% Achieved</div>
+          </div>
+        </div>
       </div>
 
-      {/* today's habit details*/}
-      <div className = "mb-4 p-4 bg-green-50 rounded shadow flex justify-between items-center">
-        <div>
-          <div className = "font-semibold">Habit Details</div>
-          <div className = "text-3xl">{todayHabitDone} habits <span className = "text-base">/ {todayHabitTotal}habits</span></div>
-        </div>
-        <div className="text-green-600 font-bold text-xl">{habitPercent}%</div>
-      </div>
-
-      {/*Chart*/}
-      <div className="mt-8">
-        <h2 className="font-semibold mb-2">주간 공부/습관 그래프</h2>
+      {/* 주간 그래프 */}
+      <div className="bg-white rounded-xl shadow p-6">
+        <h2 className="font-semibold text-gray-700 mb-4">Weekly Study/Habit Graph</h2>
         <WeeklyChart />
       </div>
     </section>
-  )
+  );
 }

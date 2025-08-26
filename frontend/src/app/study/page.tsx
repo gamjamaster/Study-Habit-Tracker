@@ -24,7 +24,7 @@ const totalMinutes = todayLogs.reduce((sum, log) => sum + log.minutes, 0);
 export default function StudyPage() {
   return (
     <section className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">공부 기록</h1>
+      <h1 className="text-2xl font-bold mb-6">Study Record</h1>
 
       {/* summary of today's study */}
       <div className="mb-6 p-4 bg-blue-50 rounded shadow flex justify-between items-center">

@@ -29,7 +29,7 @@ export default function CalendarPage() {
 
   return (
     <section className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">캘린더</h1>
+      <h1 className="text-2xl font-bold mb-6">Calendar</h1>
       <div className="grid grid-cols-7 gap-2 bg-gray-100 p-4 rounded-lg">
         {/* days header */}
         {["Sun", "Mon", "Tues", "Wed", "Thur", "Fri", "Sat"].map((w) => (
