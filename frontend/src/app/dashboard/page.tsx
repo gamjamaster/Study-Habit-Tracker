@@ -1,4 +1,6 @@
+"use client";
 import React from "react";
+import WeeklyChart from "@/components/WeeklyChart";
 
 export default function DashboardPage() { // making DashboardPage function component
   // using dummy data for now
@@ -37,11 +39,9 @@ export default function DashboardPage() { // making DashboardPage function compo
 
       {/*Chart*/}
       <div className="mt-8">
-      <h2 className="font-semibold mb-2">Weekly Study/Habit Graph (Preparing...)</h2>
-      <div className="bg-gray-100 h-32 rounded flex items-center justify-center text-gray-400">
-        chart is going to be ready soon
+        <h2 className="font-semibold mb-2">주간 공부/습관 그래프</h2>
+        <WeeklyChart />
       </div>
-    </div>
     </section>
   )
 }
