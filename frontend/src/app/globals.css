@@ -36,3 +36,30 @@ body {
   background-color: var(--color-gray-100);
   color: var(--color-gray-900);
 }
+
+.react-calendar__tile--active,
+.react-calendar__tile--now {
+  background: transparent !important;    /* 기본 배경 없애고 */
+  position: relative;
+}
+
+.react-calendar__tile--active abbr, 
+.react-calendar__tile--now abbr {
+  background: #3b82f6 !important;        /* Tailwind blue-500 */
+  color: #fff !important;
+  border-radius: 9999px;
+  display: inline-block;
+  width: 2em;
+  height: 2em;
+  line-height: 2em;
+  text-align: center;
+  font-weight: bold;
+  position: relative;
+  z-index: 2;
+  transition: background 0.2s;
+}
+
+/* hover effect */
+.react-calendar__tile--active:hover abbr {
+  background: #2563eb !important; /* Tailwind blue-600 */
+}
