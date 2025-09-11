@@ -47,7 +47,7 @@ export default function HabitPage(){
   return (
     <section className="max-w-2xl mx-auto p-8">
       {/* title */}
-      <h1 className="text-3xl font-bold mb-5">Today's Habit</h1>
+      <h1 className="text-3xl font-bold mb-5">Today&apos;s Habit</h1>
 
       {/* percentage bar + number */}
       <div className="mb-6">

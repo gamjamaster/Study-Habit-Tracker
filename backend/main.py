@@ -10,6 +10,8 @@ import schemas
 
 from habit import router as habit_router
 
+from study import router as study_router
+
 #main object of the web api server
 app = FastAPI(
     title = "Study Habit Tracker",
@@ -17,11 +19,16 @@ app = FastAPI(
     version = "1.0.0"
 ) 
 
+from dashboard import router as dashboard_router
+app.include_router(dashboard_router)
+
 app.include_router(habit_router)
+
+app.include_router(study_router)
 
 app.add_middleware(
     CORSMiddleware, # CORS => web browser security protocol
-    allow_origins = ["http://localhost:3000"], # allow access to the api at this URL.
+    allow_origins = ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"], # allow access to the api at these URLs.
     allow_credentials = True, # allows request for credentials (cookies, authorization header and ...)
     allow_methods = ["*"], # allows every http methods (GET, POST, PUT, DELETE)
     allow_headers = ["*"], # allows every header

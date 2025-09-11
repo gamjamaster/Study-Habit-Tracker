@@ -1,71 +1,156 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PlusIcon, TrashIcon, BookOpenIcon, CalendarIcon } from "@heroicons/react/24/outline";
 
-// dummy data
-const initialTodos = [
-  {id: 1, subject: "Data Structure", task: "Recap chapter 4", done: false},
-  {id: 2, subject: "Algorithm", task: "3 Time Complexity questions", done: true}
-];
+// define interfaces for type safety
+interface Subject {
+  id: number;
+  name: string;
+  color: string;
+  created_at: string;
+}
 
-const initialLogs = [
-  {id: 1, subject: "Data Structure", minutes: 60, note: "Stack/Queue"},
-  {id: 2, subject: "Algorithm", minutes: 40, note: "Questions"}
-];
+interface StudyLog {
+  id: number;
+  subject_id: number;
+  duration_minutes: number;
+  notes?: string;
+  created_at: string;
+}
 
-const initialSchedules = [
-  {id: 1, type: "assignment", subject: "Data Structure", title: "Submit a2", due: "2025-09-01"},
-  {id: 2, type: "exam", subject: "English", title: "MST", due: "2025-09-10"}
-];
+// load subjects with timeout and error handling
+async function fetchSubjects() {
+  try {
+    console.log("🔄 Fetching subjects from backend..."); // debug log
+    const controller = new AbortController(); // create timeout controller
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
+    const res = await fetch("http://127.0.0.1:8000/subjects", {
+      signal: controller.signal, // attach timeout signal
+    });
+    
+    clearTimeout(timeoutId); // clear timeout on success
+    
+    if (!res.ok) {
+      console.error("❌ Failed to fetch subjects:", res.status);
+      return [];
+    }
+    
+    const data = await res.json();
+    console.log("✅ Subjects loaded:", data.length, "items");
+    return data;
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        console.error("⏱️ Request timeout: subjects");
+      } else {
+        console.error("❌ Network error fetching subjects:", error.message);
+      }
+    } else {
+      console.error("❌ Unknown error fetching subjects:", error);
+    }
+    return []; // return empty array to prevent infinite loading
+  }
+}
 
-export default function StudyPage(){
-  // manage various status
-  const [todos, setTodos] = useState(initialTodos); // todo list
-  const [logs, setLogs] = useState(initialLogs); // study logs
-  const [newTodo, setNewTodo] = useState(""); // new todo input value
-  const [newLog, setNewLog] = useState({subject: "", minutes: "", note: ""}); // new study log input value
+// load study logs with timeout and error handling
+async function fetchStudyLogs() {
+  try {
+    console.log("🔄 Fetching study logs from backend..."); // debug log
+    const controller = new AbortController(); // create timeout controller
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
+    const res = await fetch("http://127.0.0.1:8000/study-sessions", {
+      signal: controller.signal, // attach timeout signal
+    });
+    
+    clearTimeout(timeoutId); // clear timeout on success
+    
+    if (!res.ok) {
+      console.error("❌ Failed to fetch study logs:", res.status);
+      return [];
+    }
+    
+    const data = await res.json();
+    console.log("✅ Study logs loaded:", data.length, "items");
+    return data;
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        console.error("⏱️ Request timeout: study logs");
+      } else {
+        console.error("❌ Network error fetching study logs:", error.message);
+      }
+    } else {
+      console.error("❌ Unknown error fetching study logs:", error);
+    }
+    return []; // return empty array to prevent infinite loading
+  }
+}
 
-  // calculating todays study goal and percentage achieved
-  const studyGoal = 180; // dummy goal
-  const todayStudy = logs.reduce((sum, log) => sum + log.minutes, 0);
+export default function StudyPage() {
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [logs, setLogs] = useState<StudyLog[]>([]);
+  const [newLog, setNewLog] = useState({ subject_id: "", minutes: "", note: "" });
+  const [loading, setLoading] = useState(true);
+
+  // fetch subjects and study log when loading the page
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setLoading(true);
+        console.log("Fetching data from backend..."); // debug log
+        const [subjectList, logList] = await Promise.all([fetchSubjects(), fetchStudyLogs()]);
+        console.log("Data received:", { subjectList, logList }); // debug log
+        setSubjects(subjectList);
+        setLogs(logList);
+      } catch (error) {
+        console.error("Error loading data:", error); // error log
+        // Set empty data on error to prevent infinite loading
+        setSubjects([]);
+        setLogs([]);
+      } finally {
+        setLoading(false); // always set loading to false
+      }
+    }
+    loadData();
+  }, []);
+
+  // add study log
+  const addLog = async () => {
+    if (!newLog.subject_id || !newLog.minutes) return;
+    const res = await fetch("http://127.0.0.1:8000/study-sessions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        subject_id: Number(newLog.subject_id),
+        duration_minutes: Number(newLog.minutes),
+        notes: newLog.note
+      })
+    });
+    if (res.ok) {
+      const saved = await res.json();
+      setLogs(logs => [...logs, saved]);
+      setNewLog({ subject_id: "", minutes: "", note: "" });
+    } else {
+      alert("Failed to save the log.");
+    }
+  };
+
+  // study gaal percentage
+  const studyGoal = 180;
+  const todayStudy = logs.reduce((sum, log) => sum + log.duration_minutes, 0);
   const percent = Math.round((todayStudy / studyGoal) * 100);
 
-  // add, check, delete a todo
-  const addTodo = () => {
-    if(newTodo.trim())
-      setTodos(todos => [
-       ...todos,
-       { id: Date.now(), subject: "etc", task: newTodo, done: false}
-      ]);
-    setNewTodo("");
-  };
-
-  const toggleTodo = (id: number) => {
-    setTodos(todos => todos.map(t => t.id === id ? {...t, done: !t.done} : t));
-  };
-
-  const removeTodo = (id: number) => {
-    setTodos(todos => todos.filter(t => t.id !== id));
-  };
-
-  // add a study log
-  const addLog = () => {
-    if(newLog.subject && +newLog.minutes > 0)
-      setLogs(logs => [
-       ...logs,
-       {id: Date.now(), subject: newLog.subject, minutes: +newLog.minutes, note: newLog.note}
-      ]);
-      setNewLog({subject: "", minutes: "", note: ""});
-  };
+  if (loading) return <div className="p-8 text-center text-gray-400">Loading...</div>;
 
   return (
     <section className="max-w-3xl mx-auto p-8">
-      {/* today's study summary card */}
-      <h1 className="text-3xl font-bold mb-8 text-gray-900">Today's Study</h1>
+      <h1 className="text-3xl font-bold mb-8 text-gray-900">Today&apos;s Study</h1>
       <div className="mb-8 p-6 bg-white rounded-xl shadow flex flex-col md:flex-row items-center justify-between">
         <div>
-          <div className="font-semibold text-gray-500 mb-1">Today's Study Time</div>
+          <div className="font-semibold text-gray-500 mb-1">Today&apos;s Study Time</div>
           <div className="text-3xl font-bold text-primary-500">
             {todayStudy} minutes <span className="text-base text-gray-400">/ {studyGoal} minutes</span>
           </div>
@@ -78,56 +163,23 @@ export default function StudyPage(){
         </div>
       </div>
 
-      {/* today's todo list card */}
+      {/* study log form */}
       <div className="mb-8 bg-white rounded-xl shadow p-6">
         <div className="flex items-center mb-3">
           <BookOpenIcon className="w-6 h-6 text-primary-500 mr-2" />
-          <span className="font-semibold text-lg">Today's Todo List</span>
+          <span className="font-semibold text-lg">Add Study Log</span>
         </div>
         <div className="flex gap-2 mb-4">
-          <input
-            className="flex-1 px-3 py-2 border rounded"
-            placeholder="Enter a thing to do. (Example: Math Assignment, Algorithm Questions)"
-            value={newTodo}
-            onChange={e => setNewTodo(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && addTodo()}
-          />
-          <button className="bg-primary-500 hover:bg-primary-600 text-white rounded px-3 py-2" onClick={addTodo}>
-            <PlusIcon className="w-5 h-5 inline" /> Add
-          </button>
-        </div>
-        <ul className="space-y-2">
-          {todos.map(todo => (
-            <li key={todo.id}
-              className={`p-3 rounded flex items-center justify-between shadow
-                ${todo.done ? "bg-primary-50 border border-primary-400" : "bg-white"}`}>
-              <div className="flex items-center gap-3">
-                <input type="checkbox" checked={todo.done} onChange={() => toggleTodo(todo.id)} className="w-5 h-5 accent-primary-500" />
-                <span className={`font-medium ${todo.done ? "text-primary-700 line-through" : ""}`}>
-                  [{todo.subject}] {todo.task}
-                </span>
-              </div>
-              <button onClick={() => removeTodo(todo.id)} className="p-1 rounded hover:bg-red-100">
-                <TrashIcon className="w-5 h-5 text-red-400" />
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* study record card */}
-      <div className="mb-8 bg-white rounded-xl shadow p-6">
-        <div className="flex items-center mb-3">
-          <BookOpenIcon className="w-6 h-6 text-primary-500 mr-2" />
-          <span className="font-semibold text-lg">Study Record</span>
-        </div>
-        <div className="flex gap-2 mb-4">
-          <input
+          <select
             className="w-32 px-3 py-2 border rounded"
-            placeholder="Subject"
-            value={newLog.subject}
-            onChange={e => setNewLog({ ...newLog, subject: e.target.value })}
-          />
+            value={newLog.subject_id}
+            onChange={e => setNewLog({ ...newLog, subject_id: e.target.value })}
+          >
+            <option value="">Select Subject</option>
+            {subjects.map(sub => (
+              <option key={sub.id} value={sub.id}>{sub.name}</option>
+            ))}
+          </select>
           <input
             className="w-24 px-2 py-2 border rounded"
             placeholder="Time(m)"
@@ -145,44 +197,26 @@ export default function StudyPage(){
             <PlusIcon className="w-5 h-5 inline" /> Submit
           </button>
         </div>
+      </div>
+
+      {/* study log list */}
+      <div className="mb-8 bg-white rounded-xl shadow p-6">
+        <div className="flex items-center mb-3">
+          <BookOpenIcon className="w-6 h-6 text-primary-500 mr-2" />
+          <span className="font-semibold text-lg">Study Records</span>
+        </div>
         <ul className="space-y-2">
           {logs.map(log => (
             <li key={log.id} className="p-3 rounded bg-gray-50 shadow flex justify-between items-center">
               <span>
-                <span className="font-bold text-primary-700">{log.subject}</span> - {log.minutes} minutes
-                {log.note && <span className="ml-2 text-gray-500 text-sm">({log.note})</span>}
+                <span className="font-bold text-primary-700">
+                  {subjects.find(s => s.id === log.subject_id)?.name || "Unknown"}
+                </span> - {log.duration_minutes} minutes
+                {log.notes && <span className="ml-2 text-gray-500 text-sm">({log.notes})</span>}
               </span>
             </li>
           ))}
         </ul>
-      </div>
-
-      {/* schedule card */}
-      <div className="mb-8 bg-white rounded-xl shadow p-6">
-        <div className="flex items-center mb-3">
-          <CalendarIcon className="w-6 h-6 text-primary-500 mr-2" />
-          <span className="font-semibold text-lg">Upcoming Schedule</span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {initialSchedules.map(sch => (
-            <div key={sch.id} className="p-4 rounded-xl shadow bg-primary-50 flex items-center gap-3">
-              <span className={`px-2 py-1 rounded-full text-xs font-bold
-                ${sch.type === "assignment" ? "bg-blue-100 text-primary-700" : "bg-green-100 text-green-700"}`}>
-                {sch.type === "assignment" ? "Assignment" : "Exam"}
-              </span>
-              <div className="flex-1">
-                <span className="font-semibold">{sch.subject}</span> - {sch.title}
-                <div className="text-xs text-gray-500 mt-1">Until {sch.due}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* guidance text */}
-      <div className="mt-8 text-gray-400 text-sm text-center">
-        Make your own routine<br />
-        With todo check, study schedule managemnt!
       </div>
     </section>
   );

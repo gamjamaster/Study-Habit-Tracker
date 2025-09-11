@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey # data types to make table columns
+from sqlalchemy.orm import relationship # import relationship for foreign key connections
 from database import Base # brings basic table frame from database.py
 from datetime import datetime # to record current time
 
@@ -18,12 +19,13 @@ class StudySession(Base): # table to keep track of study sessions
     id = Column(Integer, primary_key = True, index = True) 
     subject_id = Column(Integer, ForeignKey("subjects.id")) # keeps the subject that has been studied
                                                            # connects with id of subject table
-    start_time = Column(DateTime) # study begun at
-    end_time = Column(DateTime) # study ended at
+    start_time = Column(DateTime, nullable=True) # study begun at
+    end_time = Column(DateTime, nullable=True) # study ended at
     duration_minutes = Column(Integer) # total study time in minutes
     notes = Column(Text, nullable = True) # notes on what has been studied, used text type as it may be long
                                           # nullable = True: notes can be empty
     created_at = Column(DateTime, default = datetime.now)
+    subject = relationship("Subject", lazy="joined")
 
 # habit table
 class Habit(Base):
@@ -45,3 +47,4 @@ class HabitLog(Base):
     completed_date = Column(DateTime) # when the habit has been completed
     notes = Column(Text, nullable = True) # notes on how the habit has been completed
     created_at = Column(DateTime, default = datetime.now)
+    habit = relationship("Habit", lazy="joined")

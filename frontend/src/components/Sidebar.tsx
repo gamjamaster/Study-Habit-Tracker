@@ -8,12 +8,14 @@ import {
   CalendarIcon,
   CheckCircleIcon,
   BookOpenIcon,
+  AcademicCapIcon,
 } from "@heroicons/react/24/outline";
 
 // array of menu names to be displayed on the sidebar
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: ChartBarIcon },
   { name: "Study", href: "/study", icon: BookOpenIcon },
+  { name: "Subjects", href: "/subjects", icon: AcademicCapIcon },
   { name: "Habits", href: "/habit", icon: CheckCircleIcon },
   { name: "Calendar", href: "/calendar", icon: CalendarIcon },
 ];

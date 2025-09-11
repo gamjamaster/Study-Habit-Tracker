@@ -33,6 +33,7 @@ class StudySessionUpdate(BaseModel): # data format to update existing study sess
     duration_minutes: Optional[int] = None # change study time if wanted
     notes: Optional[str] = None # modify notes if wanted
 
+
 class StudySession(BaseModel): # data to send when the API responds
     id: int # unique id of the study session
     subject_id: int # unique id of the subject
@@ -40,7 +41,53 @@ class StudySession(BaseModel): # data to send when the API responds
     notes: Optional[str] # notes
     created_at: datetime # date and time at which the study session has been recorded
 
-    subject: Subject # sends the entire detail of the subject as well
-
     class Config: # inner class for Pydantic config
         from_attributes = True # automatically transform SQLAlchemy model to this schema
+
+# Simplified study session schema for API responses (without nested subject)
+class StudySessionResponse(BaseModel):
+    id: int
+    subject_id: int
+    duration_minutes: int
+    notes: Optional[str]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+from typing import List
+
+class Habit(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    target_frequency: int
+    color: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class HabitCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    target_frequency: int
+    color: str
+
+class HabitUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    target_frequency: Optional[int] = None
+    color: Optional[str] = None
+
+class HabitLog(BaseModel):
+    id: int
+    habit_id: int
+    completed_date: datetime
+
+    class Config:
+        from_attributes = True
+
+class HabitLogCreate(BaseModel):
+    habit_id: int
+    completed_date: datetime
