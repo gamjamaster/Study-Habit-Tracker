@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { PlusIcon, TrashIcon, BookOpenIcon } from "@heroicons/react/24/outline";
+import { API_ENDPOINTS } from "@/lib/api";
 
 // define interfaces for type safety
 interface Subject {
@@ -115,22 +116,44 @@ export default function StudyPage() {
 
   // add study log
   const addLog = async () => {
-    if (!newLog.subject_id || !newLog.minutes) return;
-  const res = await fetch("http://localhost:8000/study-sessions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    console.log("🔄 Adding study log...", newLog);
+    
+    if (!newLog.subject_id || !newLog.minutes) {
+      alert("Please select a subject and enter study time.");
+      return;
+    }
+
+    try {
+      const payload = {
         subject_id: Number(newLog.subject_id),
         duration_minutes: Number(newLog.minutes),
-        notes: newLog.note
-      })
-    });
-    if (res.ok) {
-      const saved = await res.json();
-      setLogs(logs => [...logs, saved]);
-      setNewLog({ subject_id: "", minutes: "", note: "" });
-    } else {
-      alert("Failed to save the log.");
+        notes: newLog.note || ""
+      };
+      
+      console.log("📤 Sending payload:", payload);
+      
+      const res = await fetch(API_ENDPOINTS.STUDY_SESSIONS, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      
+      console.log("📥 Response status:", res.status);
+      
+      if (res.ok) {
+        const saved = await res.json();
+        console.log("✅ Study log saved:", saved);
+        setLogs(logs => [...logs, saved]);
+        setNewLog({ subject_id: "", minutes: "", note: "" });
+        alert("Study log saved successfully!");
+      } else {
+        const errorText = await res.text();
+        console.error("❌ Save failed:", errorText);
+        alert(`Failed to save the log: ${errorText}`);
+      }
+    } catch (error) {
+      console.error("❌ Network error:", error);
+      alert("Network error occurred. Please check your connection.");
     }
   };
 

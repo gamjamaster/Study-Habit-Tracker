@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react"; // Import React and useState hook
 import Calendar from "react-calendar";   // Import Calendar component from react-calendar
 import "react-calendar/dist/Calendar.css"; // Import default CSS for react-calendar
+import { API_ENDPOINTS } from "@/lib/api"; // Import API endpoints
 
 // Type definitions for API data
 interface StudySession {
@@ -47,10 +48,10 @@ export default function MyCalendar() { // Function component for the calendar
       try {
         setLoading(true);
         const [sessionsRes, habitsLogRes, subjectsRes, habitsRes] = await Promise.all([
-          fetch('http://localhost:8000/study-sessions'),
-          fetch('http://localhost:8000/habit-logs'),
-          fetch('http://localhost:8000/subjects'),
-          fetch('http://localhost:8000/habits')
+          fetch(API_ENDPOINTS.STUDY_SESSIONS),
+          fetch(API_ENDPOINTS.HABIT_LOGS),
+          fetch(API_ENDPOINTS.SUBJECTS),
+          fetch(API_ENDPOINTS.HABITS)
         ]);
 
         if (sessionsRes.ok) {
@@ -175,22 +176,24 @@ export default function MyCalendar() { // Function component for the calendar
             </h3>
             {dayHabitLogs.length > 0 ? (
               <div className="space-y-3">
-                {dayHabitLogs.map((log) => {
-                  const habit = habits.find(h => h.id === log.habit_id);
-                  return (
-                    <div key={log.id} className="p-3 bg-green-50 rounded-lg">
-                      <div className="font-medium text-green-800">
-                        {habit?.name || 'Unknown Habit'}
+                {dayHabitLogs
+                  .filter((log) => habits.find(h => h.id === log.habit_id)) // Only show logs for existing habits
+                  .map((log) => {
+                    const habit = habits.find(h => h.id === log.habit_id);
+                    return (
+                      <div key={log.id} className="p-3 bg-green-50 rounded-lg">
+                        <div className="font-medium text-green-800">
+                          {habit?.name}
+                        </div>
+                        <div className="text-sm text-green-600">
+                          ✅ Completed
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {new Date(log.completed_date).toLocaleTimeString()}
+                        </div>
                       </div>
-                      <div className="text-sm text-green-600">
-                        ✅ Completed
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {new Date(log.completed_date).toLocaleTimeString()}
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </div>
             ) : (
               <p className="text-gray-500 italic">No habit logs for this day</p>

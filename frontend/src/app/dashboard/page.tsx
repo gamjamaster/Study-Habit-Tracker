@@ -3,6 +3,7 @@
 import { ChartBarIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import WeeklyChart from "@/components/WeeklyChart";
 import { useEffect, useState } from "react"; // React's current state and effect hook
+import { API_ENDPOINTS } from "@/lib/api";
 
 // type of dashboad data
 type DashboardSummary={
@@ -20,7 +21,7 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null); // error state
 
   useEffect(() => {
-  fetch("http://127.0.0.1:8000/dashboard/summary")
+  fetch(API_ENDPOINTS.DASHBOARD_SUMMARY)
       .then(res => {
         if(!res.ok) throw new Error("API Error");
         return res.json();
