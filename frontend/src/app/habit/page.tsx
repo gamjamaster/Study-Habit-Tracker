@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { API_ENDPOINTS } from "@/lib/api";
 
 // Habit interface definition
 interface Habit {
@@ -41,7 +42,7 @@ export default function HabitPage() {
       setLoading(true);
       console.log("🔄 Loading habit data...");
       
-      const response = await fetch("http://localhost:8000/habits");
+      const response = await fetch(API_ENDPOINTS.HABITS);
       if (!response.ok) throw new Error("Cannot load habit data");
       
       const habitsData: Habit[] = await response.json();
@@ -50,7 +51,9 @@ export default function HabitPage() {
       // Check today's completion status for each habit
       const habitsWithStatus = await Promise.all(
         habitsData.map(async (habit) => {
+          console.log(`🔍 Checking completion for habit ${habit.id}: ${habit.name}`);
           const isDone = await checkTodayCompletion(habit.id);
+          console.log(`📊 Habit ${habit.id} completion status: ${isDone}`);
           return { ...habit, done: isDone };
         })
       );
@@ -78,7 +81,7 @@ export default function HabitPage() {
       const today = new Date();
       const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
       
-      const response = await fetch(`http://localhost:8000/habits/${habitId}/logs`);
+      const response = await fetch(API_ENDPOINTS.habitLogs(habitId));
       
       if (!response.ok) return false;
       
@@ -86,11 +89,14 @@ export default function HabitPage() {
       console.log(`Checking habit ${habitId} for ${todayStr}:`, logs); // Debug log
       
       // Check if there's a log for today
-      return logs.some((log) => {
+      const hasToday = logs.some((log) => {
         const logDate = log.completed_date.slice(0, 10);
         console.log(`Comparing ${logDate} with ${todayStr}`); // Debug log
         return logDate === todayStr;
       });
+      
+      console.log(`Habit ${habitId} has today's log: ${hasToday}`);
+      return hasToday;
     } catch (error) {
       console.error("Completion status check error:", error);
       return false;
@@ -102,12 +108,16 @@ export default function HabitPage() {
     const habit = habits.find(h => h.id === habitId);
     if (!habit) return;
 
+    console.log(`🔄 Toggling habit ${habitId}: ${habit.name} (currently ${habit.done ? 'checked' : 'unchecked'})`);
+
     try {
       if (habit.done) {
         // Uncheck: delete today's log
+        console.log(`❌ Unchecking habit ${habitId} - deleting today's log`);
         await deleteTodayLog(habitId);
       } else {
         // Check: create today's log
+        console.log(`✅ Checking habit ${habitId} - creating today's log`);
         await createTodayLog(habitId);
       }
       
@@ -115,6 +125,7 @@ export default function HabitPage() {
       setHabits(habits.map(h => 
         h.id === habitId ? { ...h, done: !h.done } : h
       ));
+      console.log(`🔄 UI updated for habit ${habitId}`);
     } catch (error) {
       console.error("Habit toggle error:", error);
       alert("Failed to update habit status");
@@ -128,17 +139,31 @@ export default function HabitPage() {
       const today = new Date();
       const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}T00:00:00`;
       
-      const response = await fetch(`http://localhost:8000/habits/${habitId}/logs`, {
+      console.log(`📝 Creating log for habit ${habitId} on ${todayStr}`);
+      
+      const payload = {
+        habit_id: habitId,
+        completed_date: todayStr
+      };
+      
+      console.log(`📤 Sending payload:`, payload);
+      
+      const response = await fetch(API_ENDPOINTS.habitLogs(habitId), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          habit_id: habitId,
-          completed_date: todayStr
-        })
+        body: JSON.stringify(payload)
       });
       
-      if (!response.ok) throw new Error("Log creation failed");
-      console.log(`✅ Created log for habit ${habitId} on ${todayStr}`);
+      console.log(`📥 Response status: ${response.status}`);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`❌ Log creation failed: ${errorText}`);
+        throw new Error(`Log creation failed: ${errorText}`);
+      }
+      
+      const result = await response.json();
+      console.log(`✅ Log created successfully:`, result);
     } catch (error) {
       console.error("Log creation error:", error);
       throw error;
@@ -149,7 +174,7 @@ export default function HabitPage() {
   const deleteTodayLog = async (habitId: number) => {
     try {
       // Get today's logs and delete them
-      const response = await fetch(`http://localhost:8000/habits/${habitId}/logs`);
+      const response = await fetch(API_ENDPOINTS.habitLogs(habitId));
       if (!response.ok) return;
       
       const logs: HabitLog[] = await response.json();
@@ -166,7 +191,7 @@ export default function HabitPage() {
       // Delete each today's log
       for (const log of todayLogs) {
         console.log(`🗑️ Deleting log ${log.id} for habit ${habitId}`);
-        const deleteResponse = await fetch(`http://localhost:8000/habit-logs/${log.id}`, {
+        const deleteResponse = await fetch(API_ENDPOINTS.habitLogById(log.id), {
           method: "DELETE"
         });
         
@@ -187,7 +212,7 @@ export default function HabitPage() {
     if (!newHabit.trim()) return;
     
     try {
-      const response = await fetch("http://localhost:8000/habits", {
+      const response = await fetch(API_ENDPOINTS.HABITS, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -214,7 +239,7 @@ export default function HabitPage() {
     if (!confirm("Are you sure you want to delete this habit?")) return;
     
     try {
-      const response = await fetch(`http://localhost:8000/habits/${habitId}`, {
+      const response = await fetch(API_ENDPOINTS.habitById(habitId), {
         method: "DELETE"
       });
       
@@ -226,6 +251,8 @@ export default function HabitPage() {
       alert("Failed to delete habit");
     }
   };
+
+
 
   // Calculate completed habits and percentage
   const done = habits.filter(h => h.done).length;

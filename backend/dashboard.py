@@ -20,7 +20,9 @@ def dashboard_summary(db: Session = Depends(get_db)):
 
         study_goal = 180
 
+        # Count only habit logs for habits that still exist
         habit_done = db.query(func.count(models.HabitLog.id))\
+            .join(models.Habit, models.HabitLog.habit_id == models.Habit.id)\
             .filter(func.date(models.HabitLog.completed_date) == today)\
             .scalar() or 0
 

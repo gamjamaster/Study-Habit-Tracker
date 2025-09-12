@@ -1,6 +1,7 @@
 import { Bar } from "react-chartjs-2";
 import { Chart, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
 import { useState, useEffect } from "react";
+import { API_ENDPOINTS } from "@/lib/api";
 
 Chart.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -17,7 +18,7 @@ export default function WeeklyChart() {
   // function to load the weekly data from backend
   const fetchWeeklyData = async() => {
     try{
-  const response = await fetch("http://127.0.0.1:8000/dashboard/weekly");
+  const response = await fetch(API_ENDPOINTS.DASHBOARD_WEEKLY);
       if(!response.ok) throw new Error("Failed to fetch weekly data");
 
       const data = await response.json();

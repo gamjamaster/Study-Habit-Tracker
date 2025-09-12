@@ -63,13 +63,21 @@ def update_habit(habit_id: int, habit_update: schemas.HabitUpdate, db: Session =
 # 5. delete a habit
 @router.delete("/habits/{habit_id}")
 def delete_habit(habit_id: int, db: Session = Depends(get_db)):
-    """Deletes a habit"""
+    """Deletes a habit and all related logs"""
     habit = db.query(Habit).filter(Habit.id == habit_id).first()
     if not habit:
         raise HTTPException(status_code=404, detail="Cannot find the habit")
+    
+    # Delete all logs related to this habit
+    habit_logs = db.query(HabitLog).filter(HabitLog.habit_id == habit_id).all()
+    for log in habit_logs:
+        db.delete(log)
+    
+    # Delete the habit itself
+    habit_name = habit.name
     db.delete(habit)
     db.commit()
-    return {"message": f"'{habit.name}' habit has been deleted."}
+    return {"message": f"'{habit_name}' habit and all related logs have been deleted."}
 
 # 6. add habit check logs
 @router.post("/habits/{habit_id}/logs", response_model=schemas.HabitLog)
@@ -112,3 +120,23 @@ def delete_habit_log(log_id: int, db: Session = Depends(get_db)):
     db.delete(log)
     db.commit()
     return {"message": f"Habit log {log_id} has been deleted."}
+
+# 10. Clean up orphaned habit logs (logs for deleted habits)
+@router.delete("/habit-logs/cleanup/orphaned")
+def cleanup_orphaned_logs(db: Session = Depends(get_db)):
+    """Deletes habit logs for habits that no longer exist"""
+    # Find all habit logs where the habit_id doesn't exist in the habits table
+    orphaned_logs = db.query(HabitLog).filter(
+        ~HabitLog.habit_id.in_(
+            db.query(Habit.id)
+        )
+    ).all()
+    
+    count = len(orphaned_logs)
+    
+    # Delete all orphaned logs
+    for log in orphaned_logs:
+        db.delete(log)
+    
+    db.commit()
+    return {"message": f"Cleaned up {count} orphaned habit logs."}
