@@ -61,3 +61,31 @@ def delete_subject(subject_id: int, db: Session = Depends(get_db)):
     db.delete(subject)
     db.commit()
     return {"message": "Subject deleted successfully"}
+
+# 6. Update subject
+@router.put("/subjects/{subject_id}", response_model=schemas.Subject)
+def update_subject(subject_id: int, subject_update: schemas.SubjectUpdate, db: Session = Depends(get_db)):
+    """Updates a subject"""
+    subject = db.query(Subject).filter(Subject.id == subject_id).first()
+    if not subject:
+        raise HTTPException(status_code=404, detail="Subject not found")
+
+    # Update only the fields that are provided
+    if subject_update.name is not None:
+        subject.name = subject_update.name
+    if subject_update.color is not None:
+        subject.color = subject_update.color
+
+    db.commit()
+    db.refresh(subject)
+    return subject
+@router.delete("/study-sessions/{session_id}") # session id parameter on the URL path
+def delete_study_session(session_id: int, db: Session = Depends(get_db)):
+    """Deletes a study session"""
+    study_session = db.query(StudySession). filter(StudySession.id == session_id).first() # find the session with its id
+    if not study_session:
+        raise HTTPException(status_code = 404, detail = "Study session not found") # 404 error if the session does not exist
+    
+    db.delete(study_session) # delete from the database
+    db.commit() # keep the change
+    return {"message": "Study session deleted successfully"} # return the success message

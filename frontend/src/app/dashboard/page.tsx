@@ -20,7 +20,7 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null); // error state
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/dashboard/summary")
+  fetch("http://127.0.0.1:8000/dashboard/summary")
       .then(res => {
         if(!res.ok) throw new Error("API Error");
         return res.json();
@@ -33,11 +33,11 @@ export default function DashboardPage() {
           study_percent: Math.round((data.study_today / data.study_goal) * 100),
           habit_done: data.habit_done,
           habit_total: data.habit_total,
-          habit_percent: Math.round((data.habit_done / data.habit_total) * 100)
+          habit_percent: data.habit_total > 0 ? Math.round((data.habit_done / data.habit_total) * 100) : 0
         });
         setLoading(false);
       })
-      .catch(_ => {
+      .catch(() => {
         setError("Cannot load the dashboard data.");
         setLoading(false);
       });

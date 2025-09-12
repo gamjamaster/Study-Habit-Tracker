@@ -34,8 +34,8 @@ class Habit(Base):
     id = Column(Integer, primary_key = True, index = True)
     name = Column(String, index = True) # name of the habit
     description = Column(Text, nullable = True) # description of the habit
-    target_frequency = Column(Integer) # target frequency per week
-    color = Column(String) # color of each habit
+    target_frequency = Column(Integer, default=7) # target frequency per week (default 7)
+    color = Column(String, default="#10B981") # color of each habit (default green)
     created_at = Column(DateTime, default = datetime.now)
 
 # habit log table

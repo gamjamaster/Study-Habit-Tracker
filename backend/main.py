@@ -28,7 +28,7 @@ app.include_router(study_router)
 
 app.add_middleware(
     CORSMiddleware, # CORS => web browser security protocol
-    allow_origins = ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"], # allow access to the api at these URLs.
+    allow_origins = ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001", "http://localhost:3002"], # allow access to the api at these URLs.
     allow_credentials = True, # allows request for credentials (cookies, authorization header and ...)
     allow_methods = ["*"], # allows every http methods (GET, POST, PUT, DELETE)
     allow_headers = ["*"], # allows every header

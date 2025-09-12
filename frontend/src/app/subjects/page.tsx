@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"; // import React hooks for state and effect management
 import SubjectForm from "@/components/SubjectForm"; // import the subject creation form component
-import { AcademicCapIcon, TrashIcon, PencilIcon } from "@heroicons/react/24/outline"; // import required icons from heroicons library
+// Removed unused icons to satisfy lint rules
 
 // define TypeScript interface for subject data structure
 interface Subject {
@@ -22,6 +22,8 @@ export default function SubjectsPage() {
     const [error, setError] = useState<string | null>(null);
     // state hook to control whether the subject creation form is visible
     const [showForm, setShowForm] = useState(false);
+    // state hook to track which subject is being edited
+    const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
 
     // useEffect hook to run code when component mounts (loads for the first time)
     useEffect(() => {
@@ -86,6 +88,26 @@ export default function SubjectsPage() {
     const handleSubjectAdded = () => {
         fetchSubjects(); // refresh the subjects list to include new subject
         setShowForm(false); // hide the subject creation form
+        setEditingSubject(null); // clear editing state
+    };
+
+    // callback function called when a subject is successfully updated
+    const handleSubjectUpdated = () => {
+        fetchSubjects(); // refresh the subjects list to show updated subject
+        setShowForm(false); // hide the form
+        setEditingSubject(null); // clear editing state
+    };
+
+    // function to handle edit button click
+    const handleEditSubject = (subject: Subject) => {
+        setEditingSubject(subject); // set the subject being edited
+        setShowForm(true); // show the form
+    };
+
+    // function to handle cancel edit
+    const handleCancelEdit = () => {
+        setEditingSubject(null); // clear editing state
+        setShowForm(false); // hide the form
     };
 
     // utility function to format date string into readable format
@@ -119,7 +141,10 @@ export default function SubjectsPage() {
                     </div>
                     {/* button to toggle subject creation form visibility */}
                     <button
-                        onClick={() => setShowForm(!showForm)} // toggle showForm state when clicked
+                        onClick={() => {
+                            setEditingSubject(null); // clear editing state
+                            setShowForm(!showForm); // toggle showForm state when clicked
+                        }}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
                     >
                         {/* conditional text based on form visibility state */}
@@ -140,9 +165,16 @@ export default function SubjectsPage() {
                     // form container with white background, rounded corners, and shadow
                     <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
                         {/* form section title */}
-                        <h2 className="text-xl font-semibold mb-4">Add New Subject</h2>
-                        {/* render the SubjectForm component with callback prop */}
-                        <SubjectForm onCreated={handleSubjectAdded} />
+                        <h2 className="text-xl font-semibold mb-4">
+                            {editingSubject ? "Edit Subject" : "Add New Subject"}
+                        </h2>
+                        {/* render the SubjectForm component with appropriate props */}
+                        <SubjectForm
+                            onCreated={handleSubjectAdded}
+                            onUpdated={handleSubjectUpdated}
+                            editSubject={editingSubject}
+                            onCancel={handleCancelEdit}
+                        />
                     </div>
                 )}
 
@@ -247,7 +279,10 @@ export default function SubjectsPage() {
                                             Delete {/* button text */}
                                         </button>
                                         {/* edit button (placeholder for future functionality) */}
-                                        <button className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-md font-medium transition-colors">
+                                        <button
+                                            onClick={() => handleEditSubject(subject)}
+                                            className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-md font-medium transition-colors"
+                                        >
                                             Edit {/* button text */}
                                         </button>
                                     </div>

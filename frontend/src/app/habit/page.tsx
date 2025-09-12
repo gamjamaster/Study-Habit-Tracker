@@ -1,48 +1,253 @@
 "use client";
 
-import React, {useState} from "react";
-import {CheckCircleIcon, PlusIcon, TrashIcon} from "@heroicons/react/24/outline";
+import React, { useState, useEffect, useCallback } from "react";
+import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 
-// dummy data
-const dummyHabits = [
-  { id: 1, name: "Exercise", done: true },
-  { id: 2, name: "Read a book", done: false },
-  { id: 3, name: "Sleep before 12am", done: true },
-  { id: 4, name: "Eat vegetables", done: true },
-  { id: 5, name: "No soda", done: false },
-];
+// Habit interface definition
+interface Habit {
+  id: number;
+  name: string;
+  description?: string;
+  target_frequency: number;
+  color: string;
+  created_at: string;
+}
 
-export default function HabitPage(){
-  // manage habit status
-  const [habits, setHabits] = useState(dummyHabits);
-  // new habit value
+// Habit with completion status interface
+interface HabitWithStatus extends Habit {
+  done: boolean;
+}
+
+// Habit log interface
+interface HabitLog {
+  id: number;
+  habit_id: number;
+  completed_date: string;
+}
+
+export default function HabitPage() {
+  // Habit state management
+  const [habits, setHabits] = useState<HabitWithStatus[]>([]);
+  // New habit input value
   const [newHabit, setNewHabit] = useState("");
+  // Loading state
+  const [loading, setLoading] = useState(true);
+  // Error state
+  const [error, setError] = useState<string | null>(null);
 
-  // check, uncheck
-  const toggleHabits = (id: number) => {
-    setHabits(habits =>
-      habits.map(h => h.id === id ? {...h, done: !h.done} : h)
-    );
+  // Fetch habits from backend
+  const loadHabits = useCallback(async () => {
+    try {
+      setLoading(true);
+      console.log("🔄 Loading habit data...");
+      
+      const response = await fetch("http://localhost:8000/habits");
+      if (!response.ok) throw new Error("Cannot load habit data");
+      
+      const habitsData: Habit[] = await response.json();
+      console.log("✅ Habit data loaded:", habitsData.length, "items");
+      
+      // Check today's completion status for each habit
+      const habitsWithStatus = await Promise.all(
+        habitsData.map(async (habit) => {
+          const isDone = await checkTodayCompletion(habit.id);
+          return { ...habit, done: isDone };
+        })
+      );
+      
+      setHabits(habitsWithStatus);
+      setError(null);
+    } catch (error) {
+      console.error("Habit load error:", error);
+      setError("Cannot load habit data");
+      setHabits([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Load habits data when component mounts
+  useEffect(() => {
+    loadHabits();
+  }, [loadHabits]);
+
+  // Check if habit is completed today
+  const checkTodayCompletion = async (habitId: number): Promise<boolean> => {
+    try {
+      // Use local date formatting to avoid timezone issues
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      
+      const response = await fetch(`http://localhost:8000/habits/${habitId}/logs`);
+      
+      if (!response.ok) return false;
+      
+      const logs: HabitLog[] = await response.json();
+      console.log(`Checking habit ${habitId} for ${todayStr}:`, logs); // Debug log
+      
+      // Check if there's a log for today
+      return logs.some((log) => {
+        const logDate = log.completed_date.slice(0, 10);
+        console.log(`Comparing ${logDate} with ${todayStr}`); // Debug log
+        return logDate === todayStr;
+      });
+    } catch (error) {
+      console.error("Completion status check error:", error);
+      return false;
+    }
   };
 
-  // add habits
-  const addHabit = () => {
-    if(newHabit.trim())
-      setHabits(habits => [
-       ...habits,
-       {id: Date.now(), name: newHabit, done: false}
-      ]);
+  // Toggle habit completion status
+  const toggleHabits = async (habitId: number) => {
+    const habit = habits.find(h => h.id === habitId);
+    if (!habit) return;
+
+    try {
+      if (habit.done) {
+        // Uncheck: delete today's log
+        await deleteTodayLog(habitId);
+      } else {
+        // Check: create today's log
+        await createTodayLog(habitId);
+      }
+      
+      // Update UI
+      setHabits(habits.map(h => 
+        h.id === habitId ? { ...h, done: !h.done } : h
+      ));
+    } catch (error) {
+      console.error("Habit toggle error:", error);
+      alert("Failed to update habit status");
+    }
+  };
+
+  // Create today's habit completion log
+  const createTodayLog = async (habitId: number) => {
+    try {
+      // Use local date formatting to avoid timezone issues
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}T00:00:00`;
+      
+      const response = await fetch(`http://localhost:8000/habits/${habitId}/logs`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          habit_id: habitId,
+          completed_date: todayStr
+        })
+      });
+      
+      if (!response.ok) throw new Error("Log creation failed");
+      console.log(`✅ Created log for habit ${habitId} on ${todayStr}`);
+    } catch (error) {
+      console.error("Log creation error:", error);
+      throw error;
+    }
+  };
+
+  // Delete today's habit completion log
+  const deleteTodayLog = async (habitId: number) => {
+    try {
+      // Get today's logs and delete them
+      const response = await fetch(`http://localhost:8000/habits/${habitId}/logs`);
+      if (!response.ok) return;
+      
+      const logs: HabitLog[] = await response.json();
+      // Use local date formatting to match creation logic
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      
+      // Filter today's logs for deletion
+      const todayLogs = logs.filter((log) => {
+        const logDate = log.completed_date.slice(0, 10);
+        return logDate === todayStr;
+      });
+      
+      // Delete each today's log
+      for (const log of todayLogs) {
+        console.log(`🗑️ Deleting log ${log.id} for habit ${habitId}`);
+        const deleteResponse = await fetch(`http://localhost:8000/habit-logs/${log.id}`, {
+          method: "DELETE"
+        });
+        
+        if (!deleteResponse.ok) {
+          console.error(`Failed to delete log ${log.id}`);
+        } else {
+          console.log(`✅ Successfully deleted log ${log.id}`);
+        }
+      }
+    } catch (error) {
+      console.error("Log deletion error:", error);
+      throw error;
+    }
+  };
+
+  // Add new habit
+  const addHabit = async () => {
+    if (!newHabit.trim()) return;
+    
+    try {
+      const response = await fetch("http://localhost:8000/habits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newHabit.trim(),
+          description: "",
+          target_frequency: 7, // Default: 7 times per week
+          color: "#10B981" // Default: green color
+        })
+      });
+      
+      if (!response.ok) throw new Error("Habit addition failed");
+      
+      const newHabitData = await response.json();
+      setHabits([...habits, { ...newHabitData, done: false }]);
       setNewHabit("");
+    } catch (error) {
+      console.error("Habit addition error:", error);
+      alert("Failed to add habit");
+    }
   };
 
-  // delete habit
-  const removeHabit = (id: number) => {
-    setHabits(habits => habits.filter(h => h.id !== id));
+  // Delete habit
+  const removeHabit = async (habitId: number) => {
+    if (!confirm("Are you sure you want to delete this habit?")) return;
+    
+    try {
+      const response = await fetch(`http://localhost:8000/habits/${habitId}`, {
+        method: "DELETE"
+      });
+      
+      if (!response.ok) throw new Error("Habit deletion failed");
+      
+      setHabits(habits.filter(h => h.id !== habitId));
+    } catch (error) {
+      console.error("Habit deletion error:", error);
+      alert("Failed to delete habit");
+    }
   };
 
-  // number of completions
+  // Calculate completed habits and percentage
   const done = habits.filter(h => h.done).length;
   const percent = habits.length ? Math.round((done / habits.length) * 100) : 0;
+
+  // Loading display
+  if (loading) {
+    return (
+      <section className="max-w-2xl mx-auto p-8">
+        <div className="text-center text-gray-400">Loading habit data...</div>
+      </section>
+    );
+  }
+
+  // Error display
+  if (error) {
+    return (
+      <section className="max-w-2xl mx-auto p-8">
+        <div className="text-center text-red-400">{error}</div>
+      </section>
+    );
+  }
 
   return (
     <section className="max-w-2xl mx-auto p-8">

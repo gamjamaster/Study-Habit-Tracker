@@ -13,6 +13,12 @@ router = APIRouter()
 def read_habits(db: Session = Depends(get_db)):
     """Reads every habit"""
     habits = db.query(Habit).all()
+    # Handle null values by providing defaults
+    for habit in habits:
+        if habit.target_frequency is None:
+            habit.target_frequency = 7
+        if habit.color is None:
+            habit.color = "#10B981"
     return habits
 
 # 2. create new habit
@@ -21,7 +27,9 @@ def create_habit(habit: schemas.HabitCreate, db: Session = Depends(get_db)):
     """Creates new habit"""
     db_habit = Habit( # creates a new habit object
         name=habit.name,
-        description=habit.description
+        description=habit.description,
+        target_frequency=habit.target_frequency,
+        color=habit.color
     )
     db.add(db_habit)
     db.commit()
@@ -72,8 +80,7 @@ def create_habit_log(habit_id: int, log: schemas.HabitLogCreate, db: Session = D
         raise HTTPException(status_code=404, detail="Cannot find the habit")
     db_log = HabitLog(
         habit_id=habit_id,
-        date=log.date,
-        status=log.status
+        completed_date=log.completed_date
     )
     db.add(db_log)
     db.commit()
@@ -86,3 +93,22 @@ def read_habit_logs(habit_id: int, db: Session = Depends(get_db)):
     """Brings the sessions of a specific habit"""
     logs = db.query(HabitLog).filter(HabitLog.habit_id == habit_id).all()
     return logs
+
+# 8. get all habit logs
+@router.get("/habit-logs", response_model=List[schemas.HabitLog])
+def read_all_habit_logs(db: Session = Depends(get_db)):
+    """Gets all habit logs"""
+    logs = db.query(HabitLog).all()
+    return logs
+
+# 9. delete a specific habit log
+@router.delete("/habit-logs/{log_id}")
+def delete_habit_log(log_id: int, db: Session = Depends(get_db)):
+    """Deletes a specific habit log"""
+    log = db.query(HabitLog).filter(HabitLog.id == log_id).first()
+    if not log:
+        raise HTTPException(status_code=404, detail="Cannot find the habit log")
+    
+    db.delete(log)
+    db.commit()
+    return {"message": f"Habit log {log_id} has been deleted."}

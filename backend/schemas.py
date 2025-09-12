@@ -61,8 +61,8 @@ class Habit(BaseModel):
     id: int
     name: str
     description: Optional[str] = None
-    target_frequency: int
-    color: str
+    target_frequency: Optional[int] = 7  # Default to 7 if None
+    color: Optional[str] = "#10B981"  # Default green color if None
     created_at: datetime
 
     class Config:

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { PlusIcon, TrashIcon, BookOpenIcon, CalendarIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, TrashIcon, BookOpenIcon } from "@heroicons/react/24/outline";
 
 // define interfaces for type safety
 interface Subject {
@@ -28,9 +28,7 @@ async function fetchSubjects() {
     
     const res = await fetch("http://127.0.0.1:8000/subjects", {
       signal: controller.signal, // attach timeout signal
-    });
-    
-    clearTimeout(timeoutId); // clear timeout on success
+    });    clearTimeout(timeoutId); // clear timeout on success
     
     if (!res.ok) {
       console.error("❌ Failed to fetch subjects:", res.status);
@@ -63,9 +61,7 @@ async function fetchStudyLogs() {
     
     const res = await fetch("http://127.0.0.1:8000/study-sessions", {
       signal: controller.signal, // attach timeout signal
-    });
-    
-    clearTimeout(timeoutId); // clear timeout on success
+    });    clearTimeout(timeoutId); // clear timeout on success
     
     if (!res.ok) {
       console.error("❌ Failed to fetch study logs:", res.status);
@@ -120,7 +116,7 @@ export default function StudyPage() {
   // add study log
   const addLog = async () => {
     if (!newLog.subject_id || !newLog.minutes) return;
-    const res = await fetch("http://127.0.0.1:8000/study-sessions", {
+  const res = await fetch("http://localhost:8000/study-sessions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -138,10 +134,30 @@ export default function StudyPage() {
     }
   };
 
+  // delete study log
+  const deletelog = async(logId : number) => { // receive the log ID to delete with the logId parameter
+    if(!confirm("Are you sure to delete this record?")) return; // confirms the deletion
+
+    try{
+      const res = await fetch(`http://127.0.0.1:8000/study-sessions/${logId}`, { // call the delete API
+        method: "DELETE", // use the HTTP DELETE method
+      });      if(res.ok){
+        setLogs(logs => logs.filter(log => log.id !== logId)); // delete the log from UI
+        alert("Study record has been deleted successfully.") // success message
+      } else{
+        alert("Falied to delete the study record.") // failure message
+      }
+    } catch (error){
+      console.error("Delete error:", error); //error log
+      alert("An error has occured during the deletion process.") // notify the error to the user
+    }
+  };
+
   // study gaal percentage
   const studyGoal = 180;
   const todayStudy = logs.reduce((sum, log) => sum + log.duration_minutes, 0);
   const percent = Math.round((todayStudy / studyGoal) * 100);
+  const cappedPercent = Math.min(percent, 100); // limit so that the bar does not exceeds 100%
 
   if (loading) return <div className="p-8 text-center text-gray-400">Loading...</div>;
 
@@ -157,7 +173,10 @@ export default function StudyPage() {
         </div>
         <div className="flex-1 md:ml-8 w-full">
           <div className="w-full bg-gray-200 rounded-full h-3 mb-1 mt-3 md:mt-0">
-            <div className="bg-primary-500 h-3 rounded-full transition-all" style={{ width: `${percent}%` }} />
+            <div 
+              className="bg-primary-500 h-3 rounded-full transition-all"
+              style={{width: `${cappedPercent}%`}}
+            />
           </div>
           <span className="text-primary-600 font-semibold">{percent}% Achieved</span>
         </div>
@@ -208,12 +227,24 @@ export default function StudyPage() {
         <ul className="space-y-2">
           {logs.map(log => (
             <li key={log.id} className="p-3 rounded bg-gray-50 shadow flex justify-between items-center">
-              <span>
-                <span className="font-bold text-primary-700">
-                  {subjects.find(s => s.id === log.subject_id)?.name || "Unknown"}
-                </span> - {log.duration_minutes} minutes
-                {log.notes && <span className="ml-2 text-gray-500 text-sm">({log.notes})</span>}
-              </span>
+              <div>
+                <span>
+                  <span className="font-bold text-primary-700">
+                    {subjects.find(s => s.id === log.subject_id)?.name || "Unknown"}
+                  </span> - {log.duration_minutes} minutes
+                  {log.notes && <span className="ml-2 text-gray-500 text-sm">({log.notes})</span>}
+                </span>
+                <div className="text-xs text-gray-400 mt-1">
+                  {new Date(log.created_at).toLocaleDateString()} at {new Date(log.created_at).toLocaleTimeString()}
+                </div>
+              </div>
+              <button
+                onClick = {() => deletelog(log.id)} // call the delete function when clicked
+                className = "text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50"
+                title="Delete"
+              >
+                <TrashIcon className = "w-5 h-5" />
+              </button>
             </li>
           ))}
         </ul>
