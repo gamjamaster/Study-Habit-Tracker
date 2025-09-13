@@ -88,11 +88,12 @@ export default function HabitPage() {
       const logs: HabitLog[] = await response.json();
       console.log(`Checking habit ${habitId} for ${todayStr}:`, logs); // Debug log
       
-      // Check if there's a log for today
+      // Check if there's a log for today (compare date part only, regardless of timezone)
       const hasToday = logs.some((log) => {
-        const logDate = log.completed_date.slice(0, 10);
-        console.log(`Comparing ${logDate} with ${todayStr}`); // Debug log
-        return logDate === todayStr;
+        const logDate = new Date(log.completed_date);
+        const logDateStr = `${logDate.getFullYear()}-${String(logDate.getMonth() + 1).padStart(2, '0')}-${String(logDate.getDate()).padStart(2, '0')}`;
+        console.log(`Comparing ${logDateStr} with ${todayStr}`); // Debug log
+        return logDateStr === todayStr;
       });
       
       console.log(`Habit ${habitId} has today's log: ${hasToday}`);
@@ -135,15 +136,15 @@ export default function HabitPage() {
   // Create today's habit completion log
   const createTodayLog = async (habitId: number) => {
     try {
-      // Use local date formatting to avoid timezone issues
-      const today = new Date();
-      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}T00:00:00`;
+      // Use current time for when the habit was actually completed
+      const now = new Date();
+      const completedTime = now.toISOString();
       
-      console.log(`📝 Creating log for habit ${habitId} on ${todayStr}`);
+      console.log(`📝 Creating log for habit ${habitId} at ${completedTime}`);
       
       const payload = {
         habit_id: habitId,
-        completed_date: todayStr
+        completed_date: completedTime
       };
       
       console.log(`📤 Sending payload:`, payload);
@@ -182,15 +183,18 @@ export default function HabitPage() {
       const today = new Date();
       const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
       
-      // Filter today's logs for deletion
+      // Filter today's logs for deletion (use same logic as checkTodayCompletion)
       const todayLogs = logs.filter((log) => {
-        const logDate = log.completed_date.slice(0, 10);
-        return logDate === todayStr;
+        const logDate = new Date(log.completed_date);
+        const logDateStr = `${logDate.getFullYear()}-${String(logDate.getMonth() + 1).padStart(2, '0')}-${String(logDate.getDate()).padStart(2, '0')}`;
+        return logDateStr === todayStr;
       });
+      
+      console.log(`🗑️ Found ${todayLogs.length} logs to delete for habit ${habitId}`);
       
       // Delete each today's log
       for (const log of todayLogs) {
-        console.log(`🗑️ Deleting log ${log.id} for habit ${habitId}`);
+        console.log(`🗑️ Deleting log ${log.id} (${log.completed_date})`);
         const deleteResponse = await fetch(API_ENDPOINTS.habitLogById(log.id), {
           method: "DELETE"
         });
@@ -277,74 +281,93 @@ export default function HabitPage() {
   }
 
   return (
-    <section className="max-w-2xl mx-auto p-8">
-      {/* title */}
-      <h1 className="text-3xl font-bold mb-5">Today&apos;s Habit</h1>
-
-      {/* percentage bar + number */}
-      <div className="mb-6">
-        <div className="flex justify-between items-end mb-1">
-          <span className="font-semibold">Percentage Accomplished</span>
-          <span className="text-green-700 font-bold">{done} / {habits.length} ({percent}%)</span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-3">
-          <div
-            className="bg-green-500 h-3 rounded-full transition-all"
-            style={{ width: `${percent}%` }}
-          />
-        </div>
-      </div>
-
-      {/* adding habit form */}
-      <div className="flex gap-2 mb-6">
-        <input
-          className="flex-1 px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary-400"
-          placeholder="Enter a new habit"
-          value={newHabit}
-          onChange={e => setNewHabit(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && addHabit()}
-        />
-        <button
-          className="bg-primary-500 hover:bg-primary-600 text-white rounded px-3 py-2 flex items-center"
-          onClick={addHabit}
-        >
-          <PlusIcon className="w-5 h-5 mr-1" /> Add
-        </button>
-      </div>
-
-      {/* habit list */}
-      <ul className="space-y-2">
-        {habits.map(habit => (
-          <li
-            key={habit.id}
-            className={`p-3 rounded shadow flex items-center justify-between
-            ${habit.done ? "bg-green-50 border border-green-400" : "bg-white"}`}
-          >
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={habit.done}
-                onChange={() => toggleHabits(habit.id)}
-                className="w-5 h-5 accent-green-500"
-              />
-              <span className={`font-medium text-lg ${habit.done ? "text-green-700 line-through" : ""}`}>
-                {habit.name}
-              </span>
-            </div>
+    <div className="py-8">
+      <div className="max-w-2xl mx-auto p-4">
+        {/* page title */}
+        <h1 className="text-3xl font-bold mb-8 text-gray-900 text-center">✅ My Habits</h1>
+        
+        {/* habit addition card */}
+        <div className="bg-white rounded-xl shadow p-4 sm:p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4 text-gray-700">Add New Habit</h2>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <input
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-sm sm:text-base"
+              placeholder="Enter a new habit (e.g., Exercise, Reading)"
+              value={newHabit}
+              onChange={e => setNewHabit(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && addHabit()}
+            />
             <button
-              className="p-1 rounded hover:bg-red-100"
-              onClick={() => removeHabit(habit.id)}
-              title="Delete"
+              className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-6 py-3 flex items-center justify-center font-medium transition-colors"
+              onClick={addHabit}
             >
-              <TrashIcon className="w-5 h-5 text-red-400" />
+              <PlusIcon className="w-5 h-5 sm:mr-2" /> 
+              <span className="hidden sm:inline">Add</span>
             </button>
-          </li>
-        ))}
-      </ul>
-      <div className="mt-8 text-gray-400 text-sm text-center">
-        Add a habit and check when achieved. <br />
-        Consistency is the best routine!
+          </div>
+        </div>
+
+        {/* habit list card */}
+        {habits.length > 0 ? (
+          <div className="bg-white rounded-xl shadow p-6">
+            <h2 className="text-lg font-semibold mb-4 text-gray-700">Today&apos;s Habits</h2>
+            <div className="space-y-3">
+              {habits.map(habit => (
+                <div
+                  key={habit.id}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    habit.done 
+                      ? "bg-green-50 border-green-200" 
+                      : "bg-gray-50 border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={habit.done}
+                        onChange={() => toggleHabits(habit.id)}
+                        className="w-6 h-6 accent-green-500 cursor-pointer"
+                      />
+                      <span className={`font-medium text-lg ${
+                        habit.done ? "text-green-700 line-through" : "text-gray-800"
+                      }`}>
+                        {habit.name}
+                      </span>
+                      {habit.done && (
+                        <span className="text-green-600 text-sm font-medium">✅ Completed</span>
+                      )}
+                    </div>
+                    <button
+                      className="p-2 rounded-lg hover:bg-red-100 transition-colors"
+                      onClick={() => removeHabit(habit.id)}
+                      title="Delete habit"
+                    >
+                      <TrashIcon className="w-5 h-5 text-red-400" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl shadow p-8 text-center">
+            <div className="text-gray-400 mb-4">
+              <span className="text-4xl">📝</span>
+            </div>
+            <h3 className="text-lg font-medium text-gray-600 mb-2">No habits yet</h3>
+            <p className="text-gray-500">Add your first habit above to get started!</p>
+          </div>
+        )}
+
+        {/* tip */}
+        <div className="mt-8 text-center">
+          <p className="text-gray-400 text-sm">
+            💡 <strong>Tip:</strong> Add habits and check them off when completed. <br />
+            Consistency is the key to building great routines!
+          </p>
+        </div>
       </div>
-    </section>
+    </div>
   );
 }

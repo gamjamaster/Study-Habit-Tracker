@@ -185,93 +185,116 @@ export default function StudyPage() {
   if (loading) return <div className="p-8 text-center text-gray-400">Loading...</div>;
 
   return (
-    <section className="max-w-3xl mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-8 text-gray-900">Today&apos;s Study</h1>
-      <div className="mb-8 p-6 bg-white rounded-xl shadow flex flex-col md:flex-row items-center justify-between">
-        <div>
-          <div className="font-semibold text-gray-500 mb-1">Today&apos;s Study Time</div>
-          <div className="text-3xl font-bold text-primary-500">
-            {todayStudy} minutes <span className="text-base text-gray-400">/ {studyGoal} minutes</span>
-          </div>
-        </div>
-        <div className="flex-1 md:ml-8 w-full">
-          <div className="w-full bg-gray-200 rounded-full h-3 mb-1 mt-3 md:mt-0">
-            <div 
-              className="bg-primary-500 h-3 rounded-full transition-all"
-              style={{width: `${cappedPercent}%`}}
+    <div className="py-8">
+      <div className="max-w-4xl mx-auto p-4">
+        {/* 페이지 제목 */}
+        <h1 className="text-3xl font-bold mb-8 text-gray-900 text-center">📚 Study Tracker</h1>
+        
+        {/* 공부 기록 추가 카드 */}
+        <div className="bg-white rounded-xl shadow p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4 text-gray-700 flex items-center">
+            <PlusIcon className="w-5 h-5 mr-2 text-blue-500" />
+            Add Study Session
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <select
+              className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-sm sm:text-base"
+              value={newLog.subject_id}
+              onChange={e => setNewLog({ ...newLog, subject_id: e.target.value })}
+            >
+              <option value="">Select Subject</option>
+              {subjects.map(sub => (
+                <option key={sub.id} value={sub.id}>{sub.name}</option>
+              ))}
+            </select>
+            <input
+              className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-sm sm:text-base"
+              placeholder="Minutes"
+              type="number"
+              min="1"
+              value={newLog.minutes}
+              onChange={e => setNewLog({ ...newLog, minutes: e.target.value })}
             />
+            <input
+              className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-sm sm:text-base sm:col-span-2 lg:col-span-1"
+              placeholder="Notes (optional)"
+              value={newLog.note}
+              onChange={e => setNewLog({ ...newLog, note: e.target.value })}
+            />
+            <button 
+              className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-6 py-3 flex items-center justify-center font-medium transition-colors sm:col-span-2 lg:col-span-1"
+              onClick={addLog}
+            >
+              <PlusIcon className="w-5 h-5 mr-2" /> Add Session
+            </button>
           </div>
-          <span className="text-primary-600 font-semibold">{percent}% Achieved</span>
         </div>
-      </div>
 
-      {/* study log form */}
-      <div className="mb-8 bg-white rounded-xl shadow p-6">
-        <div className="flex items-center mb-3">
-          <BookOpenIcon className="w-6 h-6 text-primary-500 mr-2" />
-          <span className="font-semibold text-lg">Add Study Log</span>
-        </div>
-        <div className="flex gap-2 mb-4">
-          <select
-            className="w-32 px-3 py-2 border rounded"
-            value={newLog.subject_id}
-            onChange={e => setNewLog({ ...newLog, subject_id: e.target.value })}
-          >
-            <option value="">Select Subject</option>
-            {subjects.map(sub => (
-              <option key={sub.id} value={sub.id}>{sub.name}</option>
-            ))}
-          </select>
-          <input
-            className="w-24 px-2 py-2 border rounded"
-            placeholder="Time(m)"
-            type="number"
-            value={newLog.minutes}
-            onChange={e => setNewLog({ ...newLog, minutes: e.target.value })}
-          />
-          <input
-            className="flex-1 px-3 py-2 border rounded"
-            placeholder="Memo(optional)"
-            value={newLog.note}
-            onChange={e => setNewLog({ ...newLog, note: e.target.value })}
-          />
-          <button className="bg-primary-500 hover:bg-primary-600 text-white rounded px-3 py-2" onClick={addLog}>
-            <PlusIcon className="w-5 h-5 inline" /> Submit
-          </button>
-        </div>
-      </div>
-
-      {/* study log list */}
-      <div className="mb-8 bg-white rounded-xl shadow p-6">
-        <div className="flex items-center mb-3">
-          <BookOpenIcon className="w-6 h-6 text-primary-500 mr-2" />
-          <span className="font-semibold text-lg">Study Records</span>
-        </div>
-        <ul className="space-y-2">
-          {logs.map(log => (
-            <li key={log.id} className="p-3 rounded bg-gray-50 shadow flex justify-between items-center">
-              <div>
-                <span>
-                  <span className="font-bold text-primary-700">
-                    {subjects.find(s => s.id === log.subject_id)?.name || "Unknown"}
-                  </span> - {log.duration_minutes} minutes
-                  {log.notes && <span className="ml-2 text-gray-500 text-sm">({log.notes})</span>}
-                </span>
-                <div className="text-xs text-gray-400 mt-1">
-                  {new Date(log.created_at).toLocaleDateString()} at {new Date(log.created_at).toLocaleTimeString()}
+        {/* 공부 기록 목록 카드 */}
+        {logs.length > 0 ? (
+          <div className="bg-white rounded-xl shadow p-6">
+            <h2 className="text-lg font-semibold mb-4 text-gray-700 flex items-center">
+              <BookOpenIcon className="w-5 h-5 mr-2 text-blue-500" />
+              Study Records ({logs.length})
+            </h2>
+            <div className="space-y-3">
+              {logs.map(log => (
+                <div key={log.id} className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="font-semibold text-blue-800 text-lg">
+                          {subjects.find(s => s.id === log.subject_id)?.name || "Unknown Subject"}
+                        </span>
+                        <span className="bg-blue-200 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                          {log.duration_minutes} min
+                        </span>
+                      </div>
+                      {log.notes && (
+                        <p className="text-gray-600 mb-2 italic">"{log.notes}"</p>
+                      )}
+                      <div className="text-xs text-gray-500">
+                        📅 {new Date(log.created_at).toLocaleDateString()} at {new Date(log.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => deletelog(log.id)}
+                      className="p-2 rounded-lg hover:bg-red-100 transition-colors ml-3"
+                      title="Delete study record"
+                    >
+                      <TrashIcon className="w-5 h-5 text-red-400" />
+                    </button>
+                  </div>
                 </div>
+              ))}
+            </div>
+            {/* 총 공부 시간 요약 */}
+            <div className="mt-4 pt-4 border-t border-blue-200">
+              <div className="text-center">
+                <span className="text-blue-700 font-semibold">
+                  📊 Total: {logs.reduce((sum, log) => sum + log.duration_minutes, 0)} minutes today
+                </span>
               </div>
-              <button
-                onClick = {() => deletelog(log.id)} // call the delete function when clicked
-                className = "text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50"
-                title="Delete"
-              >
-                <TrashIcon className = "w-5 h-5" />
-              </button>
-            </li>
-          ))}
-        </ul>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl shadow p-8 text-center">
+            <div className="text-gray-400 mb-4">
+              <span className="text-4xl">📖</span>
+            </div>
+            <h3 className="text-lg font-medium text-gray-600 mb-2">No study records yet</h3>
+            <p className="text-gray-500">Add your first study session above to start tracking!</p>
+          </div>
+        )}
+
+        {/* 안내 메시지 */}
+        <div className="mt-8 text-center">
+          <p className="text-gray-400 text-sm">
+            💡 <strong>Tip:</strong> Track your study sessions to see your progress. <br />
+            Consistent learning leads to great achievements!
+          </p>
+        </div>
       </div>
-    </section>
+    </div>
   );
 }

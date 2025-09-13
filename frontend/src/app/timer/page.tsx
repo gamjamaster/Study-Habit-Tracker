@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { PlayIcon, PauseIcon, StopIcon, ClockIcon } from '@heroicons/react/24/solid';
+import { API_ENDPOINTS } from '@/lib/api';
 
 interface Subject {
   id: number;
@@ -95,14 +96,14 @@ export default function Timer() {
 
     setSaving(true);
     try {
-      const response = await fetch('http://localhost:8000/study-sessions/', {
+      const response = await fetch(API_ENDPOINTS.STUDY_SESSIONS, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           subject_id: parseInt(selectedSubject),
-          duration: time,
+          duration_minutes: Math.floor(time / 60), // 초를 분으로 변환
         }),
       });
 
@@ -111,11 +112,13 @@ export default function Timer() {
         setTime(0);
         setSelectedSubject('');
       } else {
-        alert('Failed to save session');
+        const errorData = await response.json();
+        console.error('Server error:', errorData);
+        alert('Failed to save session: ' + (errorData.detail || 'Unknown error'));
       }
     } catch (error) {
       console.error('Error saving session:', error);
-      alert('Error saving session');
+      alert('Error saving session: Network error');
     } finally {
       setSaving(false);
     }
@@ -133,28 +136,28 @@ export default function Timer() {
   };
 
   return (
-    <div className="fixed inset-0 left-60 bg-black flex flex-col items-center justify-center overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex flex-col items-center justify-center p-4 lg:p-8">
       {/* Main Timer Circle */}
-      <div className="relative mb-2">
+      <div className="relative mb-6 sm:mb-8">
         {/* Outer Ring */}
-        <div className="w-[220px] h-[220px] rounded-full border-[3px] border-gray-700 bg-gradient-to-br from-gray-900 to-black shadow-xl relative">
+        <div className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 lg:w-[280px] lg:h-[280px] rounded-full border-2 sm:border-[3px] border-gray-700 bg-gradient-to-br from-gray-800 to-black shadow-2xl relative">
           
           {/* Time Display */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <div className="text-2xl font-mono font-light text-white mb-2 tracking-wider">
+            <div className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-mono font-light text-white mb-2 sm:mb-3 tracking-wider">
               {formatTime(time)}
             </div>
             
             {/* Status Indicator */}
             <div className="flex items-center space-x-2">
-              <div className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+              <div className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full transition-all duration-300 ${
                 isRunning && !isPaused
-                  ? 'bg-gray-200 animate-pulse shadow'
+                  ? 'bg-blue-400 animate-pulse shadow'
                   : isPaused
-                  ? 'bg-gray-400 shadow'
-                  : 'bg-gray-600'
+                  ? 'bg-yellow-400 shadow'
+                  : 'bg-gray-500'
               }`}></div>
-              <span className="text-gray-400 text-xs font-medium">
+              <span className="text-gray-300 text-xs sm:text-sm font-medium">
                 {isRunning ? (isPaused ? "PAUSED" : "RUNNING") : "READY"}
               </span>
             </div>
@@ -221,64 +224,64 @@ export default function Timer() {
       </div>
 
       {/* Controls Section */}
-  <div className="flex flex-col items-center space-y-2">
+      <div className="flex flex-col items-center space-y-4 sm:space-y-6 w-full max-w-md mx-auto">
         {/* Subject Selection */}
-        <div className="relative">
+        <div className="relative w-full">
           <select
             value={selectedSubject}
             onChange={(e) => setSelectedSubject(e.target.value)}
-    className="bg-gray-900 border-2 border-gray-700 rounded-xl px-4 py-2 text-white text-sm font-medium appearance-none cursor-pointer hover:border-gray-600 focus:border-white focus:outline-none transition-all duration-300 min-w-[240px] text-center"
+            className="w-full bg-gray-800 border-2 border-gray-600 rounded-xl px-4 py-3 text-white text-sm sm:text-base font-medium appearance-none cursor-pointer hover:border-gray-500 focus:border-blue-400 focus:outline-none transition-all duration-300 text-center"
             disabled={isRunning}
           >
-            <option value="" className="bg-gray-900">Select Subject</option>
+            <option value="" className="bg-gray-800">Select Subject</option>
             {subjects.map((subject) => (
-              <option key={subject.id} value={subject.id.toString()} className="bg-gray-900">
+              <option key={subject.id} value={subject.id.toString()} className="bg-gray-800">
                 {subject.name}
               </option>
             ))}
           </select>
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </div>
         </div>
 
         {/* Control Buttons */}
-    <div className="flex flex-wrap justify-center gap-2">
+        <div className="flex flex-wrap justify-center gap-3 sm:gap-4 mb-6 sm:mb-8">
           {!isRunning ? (
             <button
               onClick={startTimer}
-      className="group flex items-center px-6 py-2 bg-white text-black rounded-full font-bold text-sm transition-all duration-300 hover:bg-gray-200 hover:scale-105 shadow-lg hover:shadow-xl"
+              className="group flex items-center px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-full font-bold text-sm sm:text-base transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
             >
-      <PlayIcon className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
-              START
+              <PlayIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 group-hover:scale-110 transition-transform" />
+              <span className="hidden sm:inline">START</span>
             </button>
           ) : (
             <>
               {isPaused ? (
                 <button
                   onClick={resumeTimer}
-      className="group flex items-center px-6 py-2 bg-white text-black rounded-full font-bold text-sm transition-all duration-300 hover:bg-gray-200 hover:scale-105 shadow-lg hover:shadow-xl"
+                  className="group flex items-center px-4 sm:px-6 py-2 sm:py-3 bg-green-500 hover:bg-green-600 text-white rounded-full font-bold text-sm sm:text-base transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
                 >
-      <PlayIcon className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
-                  RESUME
+                  <PlayIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 group-hover:scale-110 transition-transform" />
+                  <span className="hidden sm:inline">RESUME</span>
                 </button>
               ) : (
                 <button
                   onClick={pauseTimer}
-      className="group flex items-center px-6 py-2 bg-gray-800 text-white rounded-full font-bold text-sm transition-all duration-300 hover:bg-gray-700 hover:scale-105 shadow-lg hover:shadow-xl border-2 border-gray-600"
+                  className="group flex items-center px-4 sm:px-6 py-2 sm:py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-full font-bold text-sm sm:text-base transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
                 >
-      <PauseIcon className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
-                  PAUSE
+                  <PauseIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 group-hover:scale-110 transition-transform" />
+                  <span className="hidden sm:inline">PAUSE</span>
                 </button>
               )}
               <button
                 onClick={stopTimer}
-        className="group flex items-center px-6 py-2 bg-gray-800 text-white rounded-full font-bold text-sm transition-all duration-300 hover:bg-gray-700 hover:scale-105 shadow-lg hover:shadow-xl border-2 border-gray-600"
+                className="group flex items-center px-4 sm:px-6 py-2 sm:py-3 bg-red-500 hover:bg-red-600 text-white rounded-full font-bold text-sm sm:text-base transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
               >
-        <StopIcon className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
-                STOP
+                <StopIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 group-hover:scale-110 transition-transform" />
+                <span className="hidden sm:inline">STOP</span>
               </button>
             </>
           )}
@@ -288,15 +291,14 @@ export default function Timer() {
             <button
               onClick={saveSession}
               disabled={saving}
-              className="group flex items-center px-6 py-2 bg-gray-900 text-white rounded-full font-bold text-sm transition-all duration-300 hover:bg-gray-800 hover:scale-105 shadow-lg hover:shadow-xl border-2 border-gray-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="group flex items-center px-4 sm:px-6 py-2 sm:py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-full font-bold text-sm sm:text-base transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              <ClockIcon className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" />
-              {saving ? "SAVING..." : "SAVE"}
+              <ClockIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 group-hover:rotate-12 transition-transform" />
+              <span className="hidden sm:inline">{saving ? "SAVING..." : "SAVE"}</span>
+              <span className="sm:hidden">{saving ? "..." : "💾"}</span>
             </button>
           )}
         </div>
-
-  {/* Notes section removed as requested */}
       </div>
     </div>
   );

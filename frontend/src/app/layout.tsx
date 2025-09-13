@@ -11,7 +11,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="bg-gray-100 font-sans">
         {/* display the side bar */}
         <Sidebar />
-        <main className="ml-60 min-h-screen p-8">{children}</main>
+        {/* 반응형 메인 콘텐츠 영역 */}
+        <main className="lg:ml-60 min-h-screen p-4 lg:p-8 pt-20 lg:pt-8">
+          {children}
+        </main>
       </body>
     </html>
   );

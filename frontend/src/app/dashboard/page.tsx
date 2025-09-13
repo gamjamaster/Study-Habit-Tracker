@@ -49,46 +49,46 @@ export default function DashboardPage() {
   if (error) return <div className = "p-8 text-center text-red-400">{error}</div>;
   if(!summary) return null; // return null if data doesnt exist
 
+  
   return (
-    <section>
-      {/* dashboard title */}
-      <h1 className="text-3xl font-bold mb-8 text-gray-900">Dashboard</h1>
+    <div className="py-4 lg:py-8">
+      <div className="max-w-4xl mx-auto p-2 sm:p-4">
+        {/* 페이지 제목 */}
+        <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-gray-900 text-center">📊 Dashboard</h1>
 
-      {/* today's study time/habit summary */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        {/* study card */}
-        <div className="bg-white rounded-xl shadow p-6 flex items-center gap-5">
-          <div className="bg-primary-500/10 rounded-full p-3">
-            <ChartBarIcon className="w-8 h-8 text-primary-500" />
-          </div>
-          <div>
-            <div className="text-lg font-medium text-gray-500">Today&apos;s Study Time</div>
-            <div className="text-3xl font-bold text-gray-900">
-              {summary.study_today} <span className="text-base text-gray-400">/ {summary.study_goal} minutes</span>
+        {/* 오늘의 통계 카드들 */}
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-2 mb-6 sm:mb-8">
+          {/* 공부 시간 카드 */}
+          <div className="bg-blue-50 rounded-xl shadow p-4 sm:p-6 flex flex-col items-center">
+            <ChartBarIcon className="w-8 h-8 text-blue-600 mb-3" />
+            <h3 className="text-lg font-bold text-blue-700 mb-2">Today's Study Time</h3>
+            <div className="text-3xl font-bold text-blue-800 mb-1">
+              {summary.study_today} / {summary.study_goal}
             </div>
-            <div className="mt-1 text-primary-500 font-semibold">{summary.study_percent}% Achieved</div>
+            <div className="text-sm text-blue-600 mb-2">minutes</div>
+            <div className="text-lg font-semibold text-blue-700">{summary.study_percent}% Achieved</div>
+          </div>
+
+          {/* 습관 달성 카드 */}
+          <div className="bg-green-50 rounded-xl shadow p-4 sm:p-6 flex flex-col items-center">
+            <CheckCircleIcon className="w-8 h-8 text-green-600 mb-3" />
+            <h3 className="text-lg font-bold text-green-700 mb-2">Today's Habits</h3>
+            <div className="text-3xl font-bold text-green-800 mb-1">
+              {summary.habit_done} / {summary.habit_total}
+            </div>
+            <div className="text-sm text-green-600 mb-2">habits</div>
+            <div className="text-lg font-semibold text-green-700">{summary.habit_percent}% Achieved</div>
           </div>
         </div>
-        {/* habit card */}
-        <div className="bg-white rounded-xl shadow p-6 flex items-center gap-5">
-          <div className="bg-green-500/10 rounded-full p-3">
-            <CheckCircleIcon className="w-8 h-8 text-green-500" />
-          </div>
-          <div>
-            <div className="text-lg font-medium text-gray-500">Today&apos;s Achieved Habit</div>
-            <div className="text-3xl font-bold text-gray-900">
-              {summary.habit_done} <span className="text-base text-gray-400">/ {summary.habit_total} habits</span>
-            </div>
-            <div className="mt-1 text-green-500 font-semibold">{summary.habit_percent}% Achieved</div>
-          </div>
+
+        {/* 주간 차트 카드 */}
+        <div className="bg-white rounded-xl shadow p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-700 mb-4 flex items-center">
+            📈 Weekly Progress
+          </h2>
+          <WeeklyChart />
         </div>
       </div>
-
-      {/* weekly graph */}
-      <div className="bg-white rounded-xl shadow p-6">
-        <h2 className="font-semibold text-gray-700 mb-4">Weekly Study/Habit Graph</h2>
-        <WeeklyChart />
-      </div>
-    </section>
+    </div>
   );
 }
