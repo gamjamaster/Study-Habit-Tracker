@@ -14,6 +14,11 @@ export const API_ENDPOINTS = {
   habitById: (id: number) => `${API_BASE_URL}/habits/${id}`,
   habitLogs: (id: number) => `${API_BASE_URL}/habits/${id}/logs`,
   habitLogById: (id: number) => `${API_BASE_URL}/habit-logs/${id}`,
+
+  // Analytics endpoints
+  ANALYTICS_STUDY_STATS: `${API_BASE_URL}/analytics/study-stats`,
+  ANALYTICS_HABIT_COMPLETION: `${API_BASE_URL}/analytics/habit-completion`, 
+  ANALYTICS_CORRELATION: `${API_BASE_URL}/analytics/correlation`,
 };
 
 export default API_BASE_URL;

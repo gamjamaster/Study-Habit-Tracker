@@ -91,3 +91,47 @@ class HabitLog(BaseModel):
 class HabitLogCreate(BaseModel):
     habit_id: int
     completed_date: datetime
+
+class GoalBase(BaseModel):
+    goal_type: str
+    target_value: int
+    target_unit: str = "minutes"
+    period: str
+    description: Optional[str] = None
+    is_active: int = 1
+
+class GoalCreate(GoalBase):
+    pass
+
+class Goal(GoalBase):
+    id: int
+    user_id: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class GoalUpdate(BaseModel):
+    goal_type: Optional[str] = None
+    target_value: Optional[int] = None
+    target_unit: Optional[str] = None
+    period: Optional[str] = None
+    description: Optional[str] = None
+    is_active: Optional[int] = None
+
+# Heatmap schemas
+class HeatmapData(BaseModel):
+    """Individual day data for heatmap"""
+    date: str  # YYYY-MM-DD format
+    value: int  # Total activity score (0-100)
+    level: int  # Color intensity level (0-4)
+    study_time: int  # Minutes of study
+    habit_completion_rate: float  # 0.0 to 1.0
+    total_habits: int  # Total habits for the day
+    completed_habits: int  # Completed habits for the day
+
+class HeatmapResponse(BaseModel):
+    """Complete heatmap response"""
+    year: int
+    data: List[HeatmapData]
+    summary: dict  # Statistics summary

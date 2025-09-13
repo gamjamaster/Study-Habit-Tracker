@@ -2,6 +2,11 @@ from fastapi import FastAPI, Depends, HTTPException # brings the main class Fast
 from fastapi.middleware.cors import CORSMiddleware # tool that gives the web access to this api
 from sqlalchemy.orm import Session
 from typing import List # list type
+from datetime import datetime, timedelta
+from sqlalchemy import func, extract
+from models import Subject, StudySession, Habit, HabitLog, Goal
+import calendar
+import schemas  # for goal schemas
 
 # import from database.py, main.py, schemas.py
 from database import get_db, create_tables
@@ -231,3 +236,409 @@ def get_subject_study_sessions(subject_id: int, db: Session = Depends(get_db)):
     
     sessions = db.query(StudySession).filter(StudySession.subject_id == subject_id).all() # use the subject id to search for the sessions
     return sessions # return the list of sessions
+
+#-------------------------------- data analysis API endpoints--------------------------------------------
+@app.get("/analytics/study-stats")
+def get_study_statistics(period: str = "week", db: Session = Depends(get_db)):
+    """Returns weekly/monthly study statistics"""
+    try:
+        now = datetime.now()
+
+        if period == "week":
+            # data for the past 7 days
+            start_date = now - timedelta(days = 7)
+
+            # daily study time
+            daily_stats = db.query(
+                func.date(StudySession.created_at).label('date'),
+                func.sum(StudySession.duration_minutes).label('total_minutes'),
+                func.count(StudySession.id).label('session_count')
+            ).filter(
+                StudySession.created_at >= start_date
+            ).group_by(
+                func.date(StudySession.created_at)
+            ).all()
+        
+        elif period == "month":
+            # data for the past 30 days
+            start_date = now - timedelta(days = 30)
+
+            # daily study time
+            daily_stats = db.query(
+                func.date(StudySession.created_at).label('date'),
+                func.sum(StudySession.duration_minutes).label('total_minutes'),
+                func.count(StudySession.id).label('session_count')
+            ).filter(
+                StudySession.created_at >= start_date
+            ).group_by(
+                func.date(StudySession.created_at)
+            ).all()
+
+        # stats per subject
+        subject_stats = db.query(
+            Subject.name,
+            Subject.color,
+            func.sum(StudySession.duration_minutes).label('total_minutes'),
+            func.count(StudySession.id).label('session_count')
+        ).join(StudySession).filter(
+            StudySession.created_at >= start_date
+        ).group_by(
+            Subject.id, Subject.name, Subject.color
+        ).all()
+
+        return {
+            "period": period,
+            "daily_stats": [
+                {
+                    "date": str(stat.date),
+                    "total_minutes": stat.total_minutes or 0,
+                    "session_count": stat.session_count or 0
+                }
+                for stat in daily_stats
+            ],
+            "subject_stats": [
+                {
+                    "subject": stat.name,
+                    "color": stat.color,
+                    "total_minutes": stat.total_minutes or 0,
+                    "session_count": stat.session_count or 0
+                }
+                for stat in subject_stats
+            ]
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code = 500, detail = str(e))
+    
+@app.get("/analytics/habit-completion")
+def get_habit_completion_stats(period: str = "week", db: Session = Depends(get_db)):
+    """Analyse the habit completion data"""
+    try:
+        now = datetime.now()
+
+        if period == "week":
+            start_date = now - timedelta(days = 7)
+        else:
+            start_date = now - timedelta(days = 30)
+
+        # daily habit completion data
+        total_habits = db.query(func.count(Habit.id)).scalar()
+
+        daily_completion = db.query(
+            func.date(HabitLog.completed_date).label('date'),
+            func.count(func.distinct(HabitLog.habit_id)).label('completed_habits')
+        ).filter(
+            HabitLog.completed_date >= start_date
+        ).group_by(
+            func.date(HabitLog.completed_date)
+        ).all()
+
+        # completion rate by day of the week
+        weekday_completion = db.query(
+            extract('dow', HabitLog.completed_date).label('weekday'),
+            func.count(HabitLog.id).label('completion_count')
+        ).filter(
+            HabitLog.completed_date >= start_date
+        ).group_by(
+            extract('dow', HabitLog.completed_date)
+        ).all()
+
+        # completion rate by habit
+        habit_stats = db.query(
+            Habit.name,
+            func.count(HabitLog.id).label('completion_count')
+        ).join(HabitLog).filter(
+            HabitLog.completed_date >= start_date
+        ).group_by(Habit.id, Habit.name).all()
+
+        return {
+            "period": period,
+            "total_habits": total_habits,
+            "daily_completion": [
+                {
+                    "date": str(stat.date),
+                    "completed_habits": stat.completed_habits,
+                    "completion_rate": (stat.completed_habits / total_habits * 100) if total_habits > 0 else 0
+                }
+                for stat in daily_completion
+            ],
+            "weekday_completion": [
+                {
+                    "weekday": int(stat.weekday),
+                    "weekday_name": calendar.day_name[int(stat.weekday)],
+                    "completion_count": stat.completion_count
+                }
+                for stat in weekday_completion
+            ],
+            "habit_stats": [
+                {
+                    "habit_name": stat.name,
+                    "completion_count": stat.completion_count
+                }
+                for stat in habit_stats
+            ]
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code = 500, detail = str(e))
+    
+@app.get("/analytics/correlation")
+def get_study_habit_correlation(db: Session = Depends(get_db)):
+    """Correlation analysis between study time and habit completion rate"""
+    try:
+        # data for the past 30 days
+        start_date = datetime.now() - timedelta(days = 30)
+
+        # Daily study time and number of habits completed
+        correlation_data = db.query(
+            func.date(StudySession.created_at).label('date'),
+            func.sum(StudySession.duration_minutes).label('study_minutes')
+        ).filter(
+            StudySession.created_at >= start_date
+        ).group_by(
+            func.date(StudySession.created_at)
+        ).subquery()
+
+        habit_data = db.query(
+            func.date(HabitLog.completed_date).label('date'),
+            func.count(HabitLog.id).label('habit_count')
+        ).filter(
+            HabitLog.completed_date >= start_date
+        ).group_by(
+            func.date(HabitLog.completed_date)
+        ).subquery()
+
+        # 상관관계 데이터 조합
+        combined_data = db.query(
+            correlation_data.c.date,
+            correlation_data.c.study_minutes,
+            habit_data.c.habit_count
+        ).outerjoin(
+            habit_data, correlation_data.c.date == habit_data.c.date
+        ).all()
+        
+        return {
+            "correlation_data": [
+                {
+                    "date": str(data.date),
+                    "study_minutes": data.study_minutes or 0,
+                    "habit_count": data.habit_count or 0
+                }
+                for data in combined_data
+            ]
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.post("/goals/", response_model=schemas.Goal)
+def create_goal(goal: schemas.GoalCreate, db: Session = Depends(get_db)):
+    """Create a new goal"""
+    db_goal = Goal(
+        user_id="1",
+        goal_type=goal.goal_type,
+        target_value=goal.target_value,
+        target_unit=goal.target_unit,
+        period=goal.period,
+        description=goal.description,
+        is_active=goal.is_active
+    )
+    db.add(db_goal)
+    db.commit()
+    db.refresh(db_goal)
+    return db_goal
+
+@app.get("/goals/", response_model=List[schemas.Goal])
+def get_goals(db: Session = Depends(get_db)):
+    """Check every active goals"""
+    goals = db.query(Goal).filter(Goal.is_active == 1).all()
+    return goals
+
+@app.put("/goals/{goal_id}", response_model=schemas.Goal)
+def update_goal(goal_id: int, goal_update: schemas.GoalUpdate, db: Session = Depends(get_db)):
+    """Update existing goals"""
+    goal = db.query(Goal).filter(Goal.id == goal_id).first()
+    if goal is None:
+        raise HTTPException(status_code=404, detail="Cannot find the goal")
+    
+    # update the required fields
+    for field, value in goal_update.dict(exclude_unset=True).items():
+        setattr(goal, field, value)
+    
+    db.commit()
+    db.refresh(goal)
+    return goal
+
+@app.delete("/goals/{goal_id}")
+def delete_goal(goal_id: int, db: Session = Depends(get_db)):
+    """Deactivates the goal (is_active = 0)"""
+    goal = db.query(Goal).filter(Goal.id == goal_id).first()
+    if goal is None:
+        raise HTTPException(status_code=404, detail="Cannot find the goal")
+    
+    goal.is_active = 0
+    db.commit()
+    return {"message": "The goal has successfully been deactivated"}
+
+@app.get("/goals/{goal_id}/progress")
+def get_goal_progress(goal_id: int, db: Session = Depends(get_db)):
+    """Calculates the achievement rate of a specific goal and returns it"""
+    goal = db.query(Goal).filter(Goal.id == goal_id, Goal.is_active == 1).first()
+    if not goal:
+        raise HTTPException(status_code=404, detail="Goal not found")
+
+    # date calculation
+    from datetime import datetime, timedelta
+    now = datetime.now()
+    if goal.period == "daily":
+        start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    elif goal.period == "weekly":
+        start_date = now - timedelta(days=now.weekday())
+        start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+    elif goal.period == "monthly":
+        start_date = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    else:
+        start_date = now
+
+    # calculates the achievement rate
+    actual_value = 0
+    if goal.goal_type in ["daily_study", "weekly_study", "monthly_study"]:
+        # study time addition
+        actual_value = db.query(
+            StudySession
+        ).filter(
+            StudySession.created_at >= start_date
+        ).with_entities(
+            func.sum(StudySession.duration_minutes)
+        ).scalar() or 0
+    elif goal.goal_type in ["daily_habit", "weekly_habit"]:
+        # habit achievement addition
+        actual_value = db.query(
+            HabitLog
+        ).filter(
+            HabitLog.completed_date >= start_date
+        ).count()
+
+    # success rate calculation
+    progress = min(100, int((actual_value / goal.target_value) * 100)) if goal.target_value > 0 else 0
+
+    return {
+        "goal_id": goal.id,
+        "goal_type": goal.goal_type,
+        "period": goal.period,
+        "target_value": goal.target_value,
+        "actual_value": actual_value,
+        "progress": progress
+    }
+
+# ======== Activity Heatmap API ===========
+@app.get("/api/activity-heatmap", response_model=schemas.HeatmapResponse)
+def get_activity_heatmap(
+    year: int = datetime.now().year,
+    activity_type: str = "all",  # "all", "study", "habit"
+    db: Session = Depends(get_db)
+):
+    """
+    GitHub-style activity heatmap data for the specified year
+    Returns daily activity levels (0-4) based on study time and habit completion
+    """
+    from datetime import date
+    import calendar
+    
+    # Generate all dates for the year
+    start_date = date(year, 1, 1)
+    end_date = date(year, 12, 31)
+    
+    # Get study sessions for the year
+    study_sessions = db.query(StudySession).filter(
+        func.date(StudySession.created_at) >= start_date,
+        func.date(StudySession.created_at) <= end_date
+    ).all()
+    
+    # Get habit logs for the year
+    habit_logs = db.query(HabitLog).filter(
+        func.date(HabitLog.completed_date) >= start_date,
+        func.date(HabitLog.completed_date) <= end_date
+    ).all()
+    
+    # Get all habits to calculate completion rates
+    all_habits = db.query(Habit).all()
+    total_habits_count = len(all_habits)
+    
+    # Organize data by date
+    daily_data = {}
+    current_date = start_date
+    
+    while current_date <= end_date:
+        date_str = current_date.strftime("%Y-%m-%d")
+        
+        # Calculate daily study time
+        daily_study = sum(
+            session.duration_minutes for session in study_sessions
+            if session.created_at.date() == current_date
+        )
+        
+        # Calculate daily habit completion
+        daily_habits_completed = len([
+            log for log in habit_logs
+            if log.completed_date.date() == current_date
+        ])
+        
+        # Calculate completion rate
+        habit_completion_rate = (
+            daily_habits_completed / total_habits_count 
+            if total_habits_count > 0 else 0
+        )
+        
+        # Calculate activity score (0-100)
+        study_score = min(daily_study / 60 * 60, 60)  # Max 60 points for 1+ hours
+        habit_score = habit_completion_rate * 40  # Max 40 points for 100% habits
+        total_score = int(study_score + habit_score)
+        
+        # Apply activity type filter
+        if activity_type == "study":
+            total_score = int(study_score * (100/60))  # Normalize to 0-100
+        elif activity_type == "habit":
+            total_score = int(habit_score * (100/40))  # Normalize to 0-100
+        
+        # Convert to level (0-4)
+        if total_score == 0:
+            level = 0
+        elif total_score <= 25:
+            level = 1
+        elif total_score <= 50:
+            level = 2
+        elif total_score <= 75:
+            level = 3
+        else:
+            level = 4
+        
+        daily_data[date_str] = schemas.HeatmapData(
+            date=date_str,
+            value=total_score,
+            level=level,
+            study_time=daily_study,
+            habit_completion_rate=habit_completion_rate,
+            total_habits=total_habits_count,
+            completed_habits=daily_habits_completed
+        )
+        
+        current_date = date(current_date.year, current_date.month, current_date.day) + timedelta(days=1)
+    
+    # Calculate summary statistics
+    all_values = [data.value for data in daily_data.values()]
+    summary = {
+        "total_days": len(daily_data),
+        "active_days": len([v for v in all_values if v > 0]),
+        "average_score": sum(all_values) / len(all_values) if all_values else 0,
+        "max_score": max(all_values) if all_values else 0,
+        "total_study_time": sum(data.study_time for data in daily_data.values()),
+        "total_habit_completions": sum(data.completed_habits for data in daily_data.values()),
+        "activity_type": activity_type
+    }
+    
+    return schemas.HeatmapResponse(
+        year=year,
+        data=list(daily_data.values()),
+        summary=summary
+    )

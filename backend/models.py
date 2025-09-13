@@ -48,3 +48,17 @@ class HabitLog(Base):
     notes = Column(Text, nullable = True) # notes on how the habit has been completed
     created_at = Column(DateTime, default = datetime.now)
     habit = relationship("Habit", lazy="joined")
+
+# goal table
+class Goal(Base):
+    __tablename__ = "goals"
+
+    id = Column(Integer, primary_key = True, index = True) # unique ID
+    user_id = Column(String, default="1") # user ID
+    goal_type = Column(String, index = True) # goal type: "daily_study", "weekly_study", "monthly_study", "daily_habit", "weekly_habit"
+    target_value = Column(Integer) # goal value
+    target_unit = Column(String, default="minutes") # metrics: "minutes", "sessions", "habits"
+    period = Column(String, index = True) # period: "daily", "weekly", "monthly"
+    description = Column(Text, nullable = True) # goal explanation (optional)
+    is_active = Column(Integer, default=1) # if its active or not (1: active, 0: inactive)
+    created_at = Column(DateTime, default = datetime.now) # goal created time

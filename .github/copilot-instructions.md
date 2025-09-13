@@ -1,5 +1,8 @@
 # 📚 Study & Lifestyle Habit Tracker – Integrated Development Guide
 
+## Number 1 Rule
+- Do not modify the code yourself. Just show the code to me so that I can learn the codes by entering them in the codebases.
+
 ## 🎯 Project Overview
 This project is a **full-stack learning + lifestyle habit management platform** that tracks both study and lifestyle habits, and provides **My Optimal Routine** through data analysis.  
 
@@ -179,4 +182,3 @@ export default function HabitChecklist() {
 - Always answer **in Korean**  
 - When providing code, always include **line-by-line explanations** for easy understanding  
 - 내 질문에 대답할땐 항상 관련 코드 베이스들을 한줄 한줄 확인해
-- Do not modify the code yourself. Just show the code to me so that I can learn the codes by entering them in the codebases.

@@ -3,6 +3,7 @@
 import Link from "next/link"; // link component for page redirection
 import { usePathname } from "next/navigation"; // hook to know the current path
 import { useState } from "react"; // React state hook
+import { useAuth } from "@/contexts/AuthContext"; // import auth context
 // bring necessary icons from heroicons lib
 import {
   ChartBarIcon,
@@ -13,6 +14,9 @@ import {
   ClockIcon,
   Bars3Icon,
   XMarkIcon,
+  UserIcon,
+  ArrowRightOnRectangleIcon,
+  ArrowLeftOnRectangleIcon,
 } from "@heroicons/react/24/outline";
 
 // array of menu names to be displayed on the sidebar
@@ -23,16 +27,18 @@ const navItems = [
   { name: "Subjects", href: "/subjects", icon: AcademicCapIcon },
   { name: "Habits", href: "/habit", icon: CheckCircleIcon },
   { name: "Calendar", href: "/calendar", icon: CalendarIcon },
+  { name: "Personal Data", href: "/personal-data", icon: ChartBarIcon },
 ];
 
 // make a responsive sidebar component
 export default function Sidebar() {
+  const { user, signOut, loading } = useAuth();
   const pathname = usePathname(); // store the directory of the current page in the pathname variable
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // mobile menu state
 
   return (
     <>
-      {/* 모바일 헤더 */}
+      {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 bg-gray-900 text-white px-4 py-3 flex items-center justify-between z-30">
         <h1 className="text-xl font-bold">MyRoutine</h1>
         <button
@@ -47,7 +53,7 @@ export default function Sidebar() {
         </button>
       </div>
 
-      {/* 모바일 오버레이 */}
+      {/* Mobile Overray */}
       {isMobileMenuOpen && (
         <div
           className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-20"
@@ -55,25 +61,25 @@ export default function Sidebar() {
         />
       )}
 
-      {/* 사이드바 */}
+      {/* Sidebar */}
       <aside className={`
         fixed inset-y-0 left-0 bg-gray-900 text-gray-100 flex flex-col shadow-lg z-30 transition-transform duration-300
         lg:translate-x-0 lg:w-60 lg:px-6 lg:py-8
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
         w-64 px-4 py-16
       `}>
-        {/* 로고 */}
+        {/* Logo */}
         <div className="text-2xl font-bold mb-10 select-none tracking-tight px-2">
           MyRoutine
         </div>
         
-        {/* 네비게이션 */}
+        {/* Navigation */}
         <nav className="flex-1 space-y-2">
           {navItems.map((item) => (
             <Link
               key={item.href} // an unique key is needed to render a react list
               href={item.href} // path to redirect to when clicked
-              onClick={() => setIsMobileMenuOpen(false)} // 모바일에서 링크 클릭 시 메뉴 닫기
+              onClick={() => setIsMobileMenuOpen(false)}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition
                 ${
                   pathname?.startsWith(item.href) // if the current page (pathname) and href of the menu are the same, apply the style below
@@ -89,8 +95,50 @@ export default function Sidebar() {
           ))}
         </nav>
         
+        {/* Authentication Section */}
+        <div className="border-t border-gray-700 pt-4 space-y-2">
+          {user ? (
+            <>
+              {/* User Profile */}
+              <div className="flex items-center gap-3 px-4 py-2 text-gray-300">
+                <UserIcon className="w-5 h-5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {user.user_metadata?.full_name || user.email}
+                  </p>
+                  <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                </div>
+              </div>
+              
+              {/* Sign Out Button */}
+              <button
+                onClick={async () => {
+                  await signOut();
+                  window.location.href = '/auth/login';
+                }}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg transition hover:bg-gray-800 text-gray-200 w-full text-left"
+              >
+                <ArrowRightOnRectangleIcon className="w-6 h-6 flex-shrink-0" />
+                <span className="font-medium">Sign Out</span>
+              </button>
+            </>
+          ) : (
+            <>
+              {/* Sign In Button */}
+              <Link
+                href="/auth/login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg transition hover:bg-gray-800 text-gray-200"
+              >
+                <ArrowLeftOnRectangleIcon className="w-6 h-6 flex-shrink-0" />
+                <span className="font-medium">Sign In</span>
+              </Link>
+            </>
+          )}
+        </div>
+        
         {/* 저작권 */}
-        <div className="mt-auto text-xs text-gray-500 px-2">© 2025 GamjaMaster</div>
+        <div className="mt-4 text-xs text-gray-500 px-2">© 2025 GamjaMaster</div>
       </aside>
     </>
   );
