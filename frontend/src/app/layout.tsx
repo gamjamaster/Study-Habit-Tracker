@@ -1,4 +1,5 @@
 import Sidebar from "@/components/Sidebar"; // import the sidebar component
+import { AuthProvider } from "@/contexts/AuthContext"; // import auth context provider
 import "./globals.css"; // import global css for Tailwind and custom theme application
 
 // declares this file is the layput component
@@ -9,12 +10,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     /* set the language of the page to english */
     <html lang="eng"> 
       <body className="bg-gray-100 font-sans">
-        {/* display the side bar */}
-        <Sidebar />
-        {/* 반응형 메인 콘텐츠 영역 */}
-        <main className="lg:ml-60 min-h-screen p-4 lg:p-8 pt-20 lg:pt-8">
-          {children}
-        </main>
+        <AuthProvider>
+          {/* display the side bar */}
+          <Sidebar />
+          {/* resoponsive main contents */}
+          <main className="lg:ml-60 min-h-screen p-4 lg:p-8 pt-20 lg:pt-8">
+            {children}
+          </main>
+        </AuthProvider>
       </body>
     </html>
   );
