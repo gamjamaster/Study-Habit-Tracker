@@ -109,32 +109,32 @@ export default function MyCalendar() { // Function component for the calendar
   }
 
   return (
-    <div className="py-8">
+    <div className="py-4 lg:py-8">
       {/* Calendar */}
-      <div className="bg-white rounded-2xl shadow p-12 max-w-6xl w-full mx-auto mb-6 flex justify-center">
+      <div className="bg-white rounded-2xl shadow p-4 sm:p-8 lg:p-12 max-w-6xl w-full mx-auto mb-6 flex justify-center">
         <Calendar
-          onChange={(value) => setValue(value as Date)} // Update state when a date is selected
-          value={value} // Pass selected date to calendar
-          className="!border-0 w-full text-xl max-w-4xl" // Remove border, full width, larger text, constrain max width
-          calendarType="iso8601" // Start week on Monday
-          locale="eng-US" // English localization
-          prev2Label={null} // Hide previous year button
-          next2Label={null} // Hide next year button
+          onChange={(value) => setValue(value as Date)}
+          value={value}
+          className="!border-0 w-full text-sm sm:text-lg lg:text-xl max-w-4xl"
+          calendarType="iso8601"
+          locale="eng-US"
+          prev2Label={null}
+          next2Label={null}
         />
       </div>
 
       {/* Selected Date Details */}
-      <div className="max-w-6xl w-full mx-auto">
-        <h2 className="text-2xl font-bold mb-4 text-gray-900">
-          {value.toLocaleDateString('en-US', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
+      <div className="max-w-6xl w-full mx-auto px-4 sm:px-0">
+        <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-gray-800 text-center">
+          📅 {value.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
           })}
         </h2>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Study Sessions */}
           <div className="bg-white rounded-xl shadow p-6">
             <h3 className="text-lg font-semibold mb-4 text-blue-600 flex items-center">
@@ -158,7 +158,11 @@ export default function MyCalendar() { // Function component for the calendar
                         </div>
                       )}
                       <div className="text-xs text-gray-500 mt-1">
-                        {new Date(session.created_at).toLocaleTimeString()}
+                        {new Date(session.created_at).toLocaleTimeString('en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: true
+                        })}
                       </div>
                     </div>
                   );
@@ -177,7 +181,7 @@ export default function MyCalendar() { // Function component for the calendar
             {dayHabitLogs.length > 0 ? (
               <div className="space-y-3">
                 {dayHabitLogs
-                  .filter((log) => habits.find(h => h.id === log.habit_id)) // Only show logs for existing habits
+                  .filter((log) => habits.find(h => h.id === log.habit_id))
                   .map((log) => {
                     const habit = habits.find(h => h.id === log.habit_id);
                     return (
@@ -189,7 +193,11 @@ export default function MyCalendar() { // Function component for the calendar
                           ✅ Completed
                         </div>
                         <div className="text-xs text-gray-500 mt-1">
-                          {new Date(log.completed_date).toLocaleTimeString()}
+                          {new Date(log.completed_date).toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true
+                          })}
                         </div>
                       </div>
                     );
