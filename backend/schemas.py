@@ -89,7 +89,6 @@ class HabitLog(BaseModel):
         from_attributes = True
 
 class HabitLogCreate(BaseModel):
-    habit_id: int
     completed_date: datetime
 
 class GoalBase(BaseModel):

@@ -4,8 +4,17 @@ import { useState } from "react";
 import Calendar from "@/components/Calendar"; // imports the calendar UI
 import CalendarLegend from "@/components/CalendarLegend"; // imports the calendar legends
 import ActivityHeatmap from "@/components/ActivityHeatmap"; // imports the activity heatmap
+import ProtectedRoute from "@/components/ProtectedRoute"; // import protected route
 
 export default function CalendarPage() {
+  return (
+    <ProtectedRoute>
+      <CalendarContent />
+    </ProtectedRoute>
+  );
+}
+
+function CalendarContent() {
   // View mode state management (calendar or heatmap)
   const [viewMode, setViewMode] = useState<"calendar" | "heatmap">("calendar");
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());

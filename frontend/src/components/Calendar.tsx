@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react"; // Import React and useState
 import Calendar from "react-calendar";   // Import Calendar component from react-calendar
 import "react-calendar/dist/Calendar.css"; // Import default CSS for react-calendar
 import { API_ENDPOINTS } from "@/lib/api"; // Import API endpoints
+import { useAuth } from "@/contexts/AuthContext"; // Import auth context
 
 // Type definitions for API data
 interface StudySession {
@@ -41,17 +42,25 @@ export default function MyCalendar() { // Function component for the calendar
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [habits, setHabits] = useState<Habit[]>([]);
   const [loading, setLoading] = useState(true);
+  const { session } = useAuth(); // Get auth session
 
   // Fetch data from API
   useEffect(() => {
     const fetchData = async () => {
+      if (!session?.access_token) return; // Don't fetch if no token
+      
       try {
         setLoading(true);
+        const headers = {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        };
+        
         const [sessionsRes, habitsLogRes, subjectsRes, habitsRes] = await Promise.all([
-          fetch(API_ENDPOINTS.STUDY_SESSIONS),
-          fetch(API_ENDPOINTS.HABIT_LOGS),
-          fetch(API_ENDPOINTS.SUBJECTS),
-          fetch(API_ENDPOINTS.HABITS)
+          fetch(API_ENDPOINTS.STUDY_SESSIONS, { headers }),
+          fetch(API_ENDPOINTS.HABIT_LOGS, { headers }),
+          fetch(API_ENDPOINTS.SUBJECTS, { headers }),
+          fetch(API_ENDPOINTS.HABITS, { headers })
         ]);
 
         if (sessionsRes.ok) {
@@ -81,7 +90,7 @@ export default function MyCalendar() { // Function component for the calendar
     };
 
     fetchData();
-  }, []);
+  }, [session]);
 
   // Get selected date data
   const getSelectedDateData = (selectedDate: Date) => {

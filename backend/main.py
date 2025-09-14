@@ -5,6 +5,7 @@ from typing import List # list type
 from datetime import datetime, timedelta
 from sqlalchemy import func, extract
 from models import Subject, StudySession, Habit, HabitLog, Goal
+from auth import get_current_user  # autshentication function
 import calendar
 import schemas  # for goal schemas
 
@@ -83,19 +84,27 @@ if __name__ == "__main__": # run the code below only when this file is ran
 # ======== subject management API ===========
 # 1. checking every subject
 @app.get("/subjects", response_model = List[schemas.Subject])
-def get_subjects(db: Session = Depends(get_db)):
-    """Brings the list of every subjcet"""
-    subjects = db.query(Subject).all() # brings the list of every subject
+def get_subjects(
+    user_id: str = Depends(get_current_user),  # auth dependency
+    db: Session = Depends(get_db)
+):
+    """Brings the list of current user's subjects only"""
+    subjects = db.query(Subject).filter(Subject.user_id == user_id).all() # brings current user's subjects only
     return subjects
 
 # 2. create new subject
 @app.post("/subjects", response_model = schemas.Subject)
-def create_subject(subject: schemas.SubjectCreate, db:Session = Depends(get_db)):
-    """Creates new subject"""
-    # creating new subject object
+def create_subject(
+    subject: schemas.SubjectCreate, 
+    user_id: str = Depends(get_current_user),  # auth dependency
+    db: Session = Depends(get_db)
+):
+    """Creates new subject for current user"""
+    # creating new subject object with user_id
     db_subject = Subject(
         name = subject.name,
-        color = subject.color
+        color = subject.color,
+        user_id = user_id  # connect the current user id
     )
 
     # save it in db
@@ -106,20 +115,35 @@ def create_subject(subject: schemas.SubjectCreate, db:Session = Depends(get_db))
 
 #. 3. load specific subject
 @app.get("/subjects/{subject_id}", response_model = schemas.Subject)
-def get_subject(subject_id: int, db: Session = Depends(get_db)):
-    """Loads information of specific subject"""
-    subject = db.query(Subject).filter(Subject.id == subject_id).first()
+def get_subject(
+    subject_id: int, 
+    user_id: str = Depends(get_current_user),  # auth dependency
+    db: Session = Depends(get_db)
+):
+    """Loads information of specific subject for current user only"""
+    subject = db.query(Subject).filter(
+        Subject.id == subject_id, 
+        Subject.user_id == user_id  # check for the user
+    ).first()
     if not subject:
-        raise HTTPException(status_code = 404, detail = "Cannot find the subject")
+        raise HTTPException(status_code = 404, detail = "Cannot find the subject or access denied")
     return subject
 
 # 4. update subject
 @app.put("/subjects/{subject_id}", response_model = schemas.Subject)
-def update_subject(subject_id: int, subject_update: schemas.SubjectUpdate, db: Session = Depends(get_db)):
-    """Updates existing subjects' details"""
-    subject = db.query(Subject).filter(Subject.id == subject_id).first()
+def update_subject(
+    subject_id: int, 
+    subject_update: schemas.SubjectUpdate, 
+    user_id: str = Depends(get_current_user),  # auth dependency
+    db: Session = Depends(get_db)
+):
+    """Updates existing subjects' details for current user only"""
+    subject = db.query(Subject).filter(
+        Subject.id == subject_id, 
+        Subject.user_id == user_id  # check for the user
+    ).first()
     if not subject:
-        raise HTTPException(status_code = 404, detail = "Cannot find the subject")
+        raise HTTPException(status_code = 404, detail = "Cannot find the subject or access denied")
     
     # update only the values to be modified
     if subject_update.name is not None:
@@ -133,11 +157,18 @@ def update_subject(subject_id: int, subject_update: schemas.SubjectUpdate, db: S
 
 # 5. delete subject
 @app.delete("/subjects/{subject_id}")
-def delete_subject(subject_id: int, db: Session = Depends(get_db)):
-    """Deletes a subject"""
-    subject = db.query(Subject).filter(Subject.id == subject_id).first()
+def delete_subject(
+    subject_id: int, 
+    user_id: str = Depends(get_current_user),  # auth dependency
+    db: Session = Depends(get_db)
+):
+    """Deletes a subject for current user only"""
+    subject = db.query(Subject).filter(
+        Subject.id == subject_id, 
+        Subject.user_id == user_id  # check for the user
+    ).first()
     if not subject:
-        raise HTTPException(status_code = 404, detail = "Cannot find the subject")
+        raise HTTPException(status_code = 404, detail = "Cannot find the subject or access denied")
     
     db.delete(subject)
     db.commit()
@@ -147,28 +178,38 @@ def delete_subject(subject_id: int, db: Session = Depends(get_db)):
 
 # 1. check every study session
 @app.get("/study-sessions", response_model = List[schemas.StudySession]) # use the GET method API
-def get_study_sessions(db: Session = Depends(get_db)): # the return value is the lis tfrom StudySession schema
-                                                       # the db session is received by dependeny insertion
-    """Loads every study session"""
-    sessions = db.query(StudySession).all() # check every table of StudySession
+def get_study_sessions(
+    user_id: str = Depends(get_current_user),  # auth dependency
+    db: Session = Depends(get_db)
+): # the return value is the list from StudySession schema
+    """Loads current user's study sessions only"""
+    sessions = db.query(StudySession).filter(StudySession.user_id == user_id).all() # check current user's StudySession only
     return sessions # return the study sessions
 
 # 2. create new study session
 @app.post("/study-sessions", response_model = schemas.StudySession) # use the POST method API
-def create_study_session(session: schemas.StudySessionCreate, db: Session = Depends(get_db)):
+def create_study_session(
+    session: schemas.StudySessionCreate, 
+    user_id: str = Depends(get_current_user),  # auth dependency
+    db: Session = Depends(get_db)
+):
     # session: schemas.StudySessionCreate: parse the data that has been requested(study sessions)
-    """Creates a new study session"""
-    # check if the subject exists
-    subject = db.query(Subject).filter(Subject.id == session.subject_id).first()
-    # 404 error if it doesnt
+    """Creates a new study session for current user"""
+    # check if the subject exists and belongs to current user
+    subject = db.query(Subject).filter(
+        Subject.id == session.subject_id, 
+        Subject.user_id == user_id  # check for the user
+    ).first()
+    # 404 error if it doesnt exist or access denied
     if not subject:
-        raise HTTPException(status_code = 404, detail = "Cannot find the subject")
+        raise HTTPException(status_code = 404, detail = "Cannot find the subject or access denied")
     
-    # creating new study session object
+    # creating new study session object with user_id
     db_session = StudySession(
         subject_id = session.subject_id,
         duration_minutes = session.duration_minutes,
-        notes = session.notes
+        notes = session.notes,
+        user_id = user_id  # connect the current user id
     )
 
     # save the object in the db
@@ -179,27 +220,45 @@ def create_study_session(session: schemas.StudySessionCreate, db: Session = Depe
 
 # 3. check a specific study session
 @app.get("/study-sessions/{session_id}", response_model = schemas.StudySession) # use a specific id to search for the session
-def get_study_session(session_id: int, db: Session = Depends(get_db)): # session_id: int: get the session id from the URL
-    """Loads the details of a specific study session"""
-    session = db.query(StudySession).filter(StudySession.id == session_id).first() # search for the session with the id provided
+def get_study_session(
+    session_id: int, 
+    user_id: str = Depends(get_current_user),  # add JWT authentication
+    db: Session = Depends(get_db)
+): # session_id: int: get the session id from the URL
+    """Loads the details of a specific study session for current user only"""
+    session = db.query(StudySession).filter(
+        StudySession.id == session_id,
+        StudySession.user_id == user_id  # ensure user owns this session
+    ).first() # search for the session with the id provided
     if not session:
-        raise HTTPException(status_code = 404, detail = "Cannot find the study session") # 404 error if it doesnt exist
+        raise HTTPException(status_code = 404, detail = "Cannot find the study session or access denied") # 404 error if it doesnt exist
     return session # return the session
 
 # 4. update study session
 @app.put("/study-sessions/{session_id}", response_model = schemas.StudySession) # use the PUT method to modify the session details
-def update_study_session(session_id: int, session_update: schemas.StudySessionUpdate, db: Session = Depends(get_db)): # session_update: schemas.StudySessionUpdate parse the detaisl to be updated
-    """Updates the details of existing study sessions"""
-    session = db.query(StudySession).filter(StudySession.id == session_id).first() # search for the study session
+def update_study_session(
+    session_id: int, 
+    session_update: schemas.StudySessionUpdate, 
+    user_id: str = Depends(get_current_user),  # add JWT authentication
+    db: Session = Depends(get_db)
+): # session_update: schemas.StudySessionUpdate parse the detaisl to be updated
+    """Updates the details of existing study sessions for current user only"""
+    session = db.query(StudySession).filter(
+        StudySession.id == session_id,
+        StudySession.user_id == user_id  # ensure user owns this session
+    ).first() # search for the study session
     if not session: # 404 error if the session does not exist
-        raise HTTPException(status_code = 404, detail = "Cannot find the study session")
+        raise HTTPException(status_code = 404, detail = "Cannot find the study session or access denied")
     
     # change only the fields to be updated
     if session_update.subject_id is not None:
-        # if the new subject exists
-        subject = db.query(Subject).filter(Subject.id == session_update.subject_id).first()
-        if not subject: # 404 error if the subject does not exist
-            raise HTTPException(status_code = 404, detail = "Cannot find the subject")
+        # if the new subject exists and belongs to current user
+        subject = db.query(Subject).filter(
+            Subject.id == session_update.subject_id,
+            Subject.user_id == user_id  # ensure subject belongs to current user
+        ).first()
+        if not subject: # 404 error if the subject does not exist or access denied
+            raise HTTPException(status_code = 404, detail = "Cannot find the subject or access denied")
         session.subject_id = session_update.subject_id
 
         if session_update.duration_minutes is not None: # update the study time
@@ -214,11 +273,18 @@ def update_study_session(session_id: int, session_update: schemas.StudySessionUp
     
 # 5. delete study session
 @app.delete("/study-sessions/{session_id}") # use the DELETE method to remove a specific session
-def delete_study_session(session_id: int, db: Session = Depends(get_db)):
-    """Deletes a study session"""
-    session = db.query(StudySession).filter(StudySession.id == session_id).first() # search for the session
+def delete_study_session(
+    session_id: int, 
+    user_id: str = Depends(get_current_user),  # add JWT authentication
+    db: Session = Depends(get_db)
+):
+    """Deletes a study session for current user only"""
+    session = db.query(StudySession).filter(
+        StudySession.id == session_id,
+        StudySession.user_id == user_id  # ensure user owns this session
+    ).first() # search for the session
     if not session: # 404 error if the session does not exist
-        raise HTTPException(status_code = 404, detail = "Cannot find the study session")
+        raise HTTPException(status_code = 404, detail = "Cannot find the study session or access denied")
     
     db.delete(session) # delete the session
     db.commit() # save the change
@@ -228,18 +294,32 @@ def delete_study_session(session_id: int, db: Session = Depends(get_db)):
 
 # 6. search for the sessions with a specific subject
 @app.get("/subjects/{subject_id}/study-sessions", response_model = List[schemas.StudySession]) # use the GET method to search for all the sessions with a specific subject
-def get_subject_study_sessions(subject_id: int, db: Session = Depends(get_db)):
-    """Brings the study sessions of a specfic subject"""
-    subject = db.query(Subject).filter(Subject.id == subject_id).first()
-    if not subject: # 404 error if the session does not exist
-        raise HTTPException(status_code = 404, detail = "Cannot find the subject")
+def get_subject_study_sessions(
+    subject_id: int, 
+    user_id: str = Depends(get_current_user),  # add JWT authentication
+    db: Session = Depends(get_db)
+):
+    """Brings the study sessions of a specific subject for current user only"""
+    subject = db.query(Subject).filter(
+        Subject.id == subject_id,
+        Subject.user_id == user_id  # ensure subject belongs to current user
+    ).first()
+    if not subject: # 404 error if the subject does not exist or access denied
+        raise HTTPException(status_code = 404, detail = "Cannot find the subject or access denied")
     
-    sessions = db.query(StudySession).filter(StudySession.subject_id == subject_id).all() # use the subject id to search for the sessions
+    sessions = db.query(StudySession).filter(
+        StudySession.subject_id == subject_id,
+        StudySession.user_id == user_id  # ensure sessions belong to current user
+    ).all() # use the subject id to search for the sessions
     return sessions # return the list of sessions
 
 #-------------------------------- data analysis API endpoints--------------------------------------------
 @app.get("/analytics/study-stats")
-def get_study_statistics(period: str = "week", db: Session = Depends(get_db)):
+def get_study_statistics(
+    period: str = "week", 
+    user_id: str = Depends(get_current_user),  # auth dependency
+    db: Session = Depends(get_db)
+):
     """Returns weekly/monthly study statistics"""
     try:
         now = datetime.now()
@@ -248,13 +328,14 @@ def get_study_statistics(period: str = "week", db: Session = Depends(get_db)):
             # data for the past 7 days
             start_date = now - timedelta(days = 7)
 
-            # daily study time
+            # daily study time for current user only
             daily_stats = db.query(
                 func.date(StudySession.created_at).label('date'),
                 func.sum(StudySession.duration_minutes).label('total_minutes'),
                 func.count(StudySession.id).label('session_count')
             ).filter(
-                StudySession.created_at >= start_date
+                StudySession.created_at >= start_date,
+                StudySession.user_id == user_id  # add user filtering
             ).group_by(
                 func.date(StudySession.created_at)
             ).all()
@@ -263,25 +344,28 @@ def get_study_statistics(period: str = "week", db: Session = Depends(get_db)):
             # data for the past 30 days
             start_date = now - timedelta(days = 30)
 
-            # daily study time
+            # daily study time for current user only
             daily_stats = db.query(
                 func.date(StudySession.created_at).label('date'),
                 func.sum(StudySession.duration_minutes).label('total_minutes'),
                 func.count(StudySession.id).label('session_count')
             ).filter(
-                StudySession.created_at >= start_date
+                StudySession.created_at >= start_date,
+                StudySession.user_id == user_id  # add user filtering
             ).group_by(
                 func.date(StudySession.created_at)
             ).all()
 
-        # stats per subject
+        # stats per subject for current user only
         subject_stats = db.query(
             Subject.name,
             Subject.color,
             func.sum(StudySession.duration_minutes).label('total_minutes'),
             func.count(StudySession.id).label('session_count')
         ).join(StudySession).filter(
-            StudySession.created_at >= start_date
+            StudySession.created_at >= start_date,
+            StudySession.user_id == user_id,  # add user filtering
+            Subject.user_id == user_id  # add user filtering
         ).group_by(
             Subject.id, Subject.name, Subject.color
         ).all()
@@ -309,9 +393,51 @@ def get_study_statistics(period: str = "week", db: Session = Depends(get_db)):
 
     except Exception as e:
         raise HTTPException(status_code = 500, detail = str(e))
+
+# ======== Dashboard Summary API ===========
+@app.get("/dashboard/summary")
+def get_dashboard_summary(
+    user_id: str = Depends(get_current_user),  # auth dependency
+    db: Session = Depends(get_db)
+):
+    """Returns current user's dashboard summary data"""
+    try:
+        from datetime import datetime, timedelta
+        
+        today = datetime.now().date()
+        
+        # calculates today's study time of the day
+        study_today = db.query(StudySession).filter(
+            StudySession.user_id == user_id,
+            func.date(StudySession.created_at) == today
+        ).with_entities(func.sum(StudySession.duration_minutes)).scalar() or 0
+        
+        # habit achieved today
+        habits_done = db.query(HabitLog).filter(
+            HabitLog.user_id == user_id,
+            func.date(HabitLog.completed_date) == today
+        ).count()
+        
+        # total number of habits
+        total_habits = db.query(Habit).filter(
+            Habit.user_id == user_id
+        ).count()
+        
+        return {
+            "study_today": study_today,
+            "study_goal": 180,
+            "habit_done": habits_done,
+            "habit_total": total_habits
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     
 @app.get("/analytics/habit-completion")
-def get_habit_completion_stats(period: str = "week", db: Session = Depends(get_db)):
+def get_habit_completion_stats(
+    period: str = "week", 
+    user_id: str = Depends(get_current_user),  # add JWT authentication
+    db: Session = Depends(get_db)
+):
     """Analyse the habit completion data"""
     try:
         now = datetime.now()
@@ -321,33 +447,36 @@ def get_habit_completion_stats(period: str = "week", db: Session = Depends(get_d
         else:
             start_date = now - timedelta(days = 30)
 
-        # daily habit completion data
-        total_habits = db.query(func.count(Habit.id)).scalar()
+        # daily habit completion data for current user only
+        total_habits = db.query(func.count(Habit.id)).filter(Habit.user_id == user_id).scalar()
 
         daily_completion = db.query(
             func.date(HabitLog.completed_date).label('date'),
             func.count(func.distinct(HabitLog.habit_id)).label('completed_habits')
-        ).filter(
+        ).join(Habit, HabitLog.habit_id == Habit.id).filter(
+            Habit.user_id == user_id,  # filter by user_id
             HabitLog.completed_date >= start_date
         ).group_by(
             func.date(HabitLog.completed_date)
         ).all()
 
-        # completion rate by day of the week
+        # completion rate by day of the week for current user only
         weekday_completion = db.query(
             extract('dow', HabitLog.completed_date).label('weekday'),
             func.count(HabitLog.id).label('completion_count')
-        ).filter(
+        ).join(Habit, HabitLog.habit_id == Habit.id).filter(
+            Habit.user_id == user_id,  # filter by user_id
             HabitLog.completed_date >= start_date
         ).group_by(
             extract('dow', HabitLog.completed_date)
         ).all()
 
-        # completion rate by habit
+        # completion rate by habit for current user only
         habit_stats = db.query(
             Habit.name,
             func.count(HabitLog.id).label('completion_count')
         ).join(HabitLog).filter(
+            Habit.user_id == user_id,  # filter by user_id
             HabitLog.completed_date >= start_date
         ).group_by(Habit.id, Habit.name).all()
 
@@ -383,7 +512,10 @@ def get_habit_completion_stats(period: str = "week", db: Session = Depends(get_d
         raise HTTPException(status_code = 500, detail = str(e))
     
 @app.get("/analytics/correlation")
-def get_study_habit_correlation(db: Session = Depends(get_db)):
+def get_study_habit_correlation(
+    user_id: str = Depends(get_current_user),  # add JWT authentication
+    db: Session = Depends(get_db)
+):
     """Correlation analysis between study time and habit completion rate"""
     try:
         # data for the past 30 days
@@ -394,6 +526,7 @@ def get_study_habit_correlation(db: Session = Depends(get_db)):
             func.date(StudySession.created_at).label('date'),
             func.sum(StudySession.duration_minutes).label('study_minutes')
         ).filter(
+            StudySession.user_id == user_id,  # filter by user_id
             StudySession.created_at >= start_date
         ).group_by(
             func.date(StudySession.created_at)
@@ -402,13 +535,14 @@ def get_study_habit_correlation(db: Session = Depends(get_db)):
         habit_data = db.query(
             func.date(HabitLog.completed_date).label('date'),
             func.count(HabitLog.id).label('habit_count')
-        ).filter(
+        ).join(Habit, HabitLog.habit_id == Habit.id).filter(
+            Habit.user_id == user_id,  # filter by user_id
             HabitLog.completed_date >= start_date
         ).group_by(
             func.date(HabitLog.completed_date)
         ).subquery()
 
-        # 상관관계 데이터 조합
+        # combined data
         combined_data = db.query(
             correlation_data.c.date,
             correlation_data.c.study_minutes,
@@ -536,6 +670,7 @@ def get_goal_progress(goal_id: int, db: Session = Depends(get_db)):
 def get_activity_heatmap(
     year: int = datetime.now().year,
     activity_type: str = "all",  # "all", "study", "habit"
+    user_id: str = Depends(get_current_user),  # auth dependency
     db: Session = Depends(get_db)
 ):
     """
@@ -549,20 +684,22 @@ def get_activity_heatmap(
     start_date = date(year, 1, 1)
     end_date = date(year, 12, 31)
     
-    # Get study sessions for the year
+    # Get study sessions for the year (current user only)
     study_sessions = db.query(StudySession).filter(
         func.date(StudySession.created_at) >= start_date,
-        func.date(StudySession.created_at) <= end_date
+        func.date(StudySession.created_at) <= end_date,
+        StudySession.user_id == user_id  # add user filtering
     ).all()
     
-    # Get habit logs for the year
+    # Get habit logs for the year (current user only)
     habit_logs = db.query(HabitLog).filter(
         func.date(HabitLog.completed_date) >= start_date,
-        func.date(HabitLog.completed_date) <= end_date
+        func.date(HabitLog.completed_date) <= end_date,
+        HabitLog.user_id == user_id  # add user filtering
     ).all()
     
-    # Get all habits to calculate completion rates
-    all_habits = db.query(Habit).all()
+    # Get all habits to calculate completion rates (current user only)
+    all_habits = db.query(Habit).filter(Habit.user_id == user_id).all()  # add user filtering
     total_habits_count = len(all_habits)
     
     # Organize data by date

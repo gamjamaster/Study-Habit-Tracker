@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { API_ENDPOINTS } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";  // import authentication context
+import ProtectedRoute from "@/components/ProtectedRoute";  // import protected route component
 
 // Habit interface definition
 interface Habit {
@@ -26,7 +28,8 @@ interface HabitLog {
   completed_date: string;
 }
 
-export default function HabitPage() {
+function HabitContent() {
+  const { user, session } = useAuth(); // get authentication state
   // Habit state management
   const [habits, setHabits] = useState<HabitWithStatus[]>([]);
   // New habit input value
@@ -36,13 +39,66 @@ export default function HabitPage() {
   // Error state
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch habits from backend
+  // Check if habit is completed today - helper function
+  const checkTodayCompletion = useCallback(async (habitId: number): Promise<boolean> => {
+    try {
+      // check authentication before making API calls
+      if (!session) return false;
+
+      // Use local date formatting to avoid timezone issues
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      
+      const response = await fetch(API_ENDPOINTS.habitLogs(habitId), {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,  // add JWT token
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) return false;
+      
+      const logs: HabitLog[] = await response.json();
+      console.log(`Checking habit ${habitId} for ${todayStr}:`, logs); // Debug log
+      
+      // Check if there's a log for today (compare date part only, regardless of timezone)
+      const hasToday = logs.some((log) => {
+        const logDate = new Date(log.completed_date);
+        // Convert UTC date to local date for comparison
+        const logLocalDate = new Date(logDate.getTime() - (logDate.getTimezoneOffset() * 60000));
+        const logDateStr = `${logLocalDate.getFullYear()}-${String(logLocalDate.getMonth() + 1).padStart(2, '0')}-${String(logLocalDate.getDate()).padStart(2, '0')}`;
+        const isToday = logDateStr === todayStr;
+        console.log(`Comparing log date: ${logDateStr} (UTC to local) with today: ${todayStr} = ${isToday}`);
+        return isToday;
+      });
+      
+      console.log(`✅ Habit ${habitId} completed today: ${hasToday}`);
+      return hasToday;
+    } catch (error) {
+      console.error(`❌ Error checking habit ${habitId} completion:`, error);
+      return false;
+    }
+  }, [session]);
+
+  // Fetch habits from backend  
   const loadHabits = useCallback(async () => {
+    // check authentication before making API calls
+    if (!user || !session) {
+      console.log('Habit: No user or session', { user: !!user, session: !!session });
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       console.log("🔄 Loading habit data...");
       
-      const response = await fetch(API_ENDPOINTS.HABITS);
+      const response = await fetch(API_ENDPOINTS.HABITS, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,  // add JWT token
+          'Content-Type': 'application/json'
+        }
+      });
       if (!response.ok) throw new Error("Cannot load habit data");
       
       const habitsData: Habit[] = await response.json();
@@ -67,42 +123,23 @@ export default function HabitPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user, session, checkTodayCompletion]); // add dependencies for authentication state
 
   // Load habits data when component mounts
   useEffect(() => {
+    console.log("🔄 Habit page mounted, loading habits...");
     loadHabits();
   }, [loadHabits]);
 
-  // Check if habit is completed today
-  const checkTodayCompletion = async (habitId: number): Promise<boolean> => {
-    try {
-      // Use local date formatting to avoid timezone issues
-      const today = new Date();
-      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-      
-      const response = await fetch(API_ENDPOINTS.habitLogs(habitId));
-      
-      if (!response.ok) return false;
-      
-      const logs: HabitLog[] = await response.json();
-      console.log(`Checking habit ${habitId} for ${todayStr}:`, logs); // Debug log
-      
-      // Check if there's a log for today (compare date part only, regardless of timezone)
-      const hasToday = logs.some((log) => {
-        const logDate = new Date(log.completed_date);
-        const logDateStr = `${logDate.getFullYear()}-${String(logDate.getMonth() + 1).padStart(2, '0')}-${String(logDate.getDate()).padStart(2, '0')}`;
-        console.log(`Comparing ${logDateStr} with ${todayStr}`); // Debug log
-        return logDateStr === todayStr;
-      });
-      
-      console.log(`Habit ${habitId} has today's log: ${hasToday}`);
-      return hasToday;
-    } catch (error) {
-      console.error("Completion status check error:", error);
-      return false;
+  // Also reload habits when session changes
+  useEffect(() => {
+    if (session) {
+      console.log("🔄 Session changed, reloading habits...");
+      loadHabits();
     }
-  };
+  }, [session, loadHabits]);
+
+
 
   // Toggle habit completion status
   const toggleHabits = async (habitId: number) => {
@@ -111,8 +148,16 @@ export default function HabitPage() {
 
     console.log(`🔄 Toggling habit ${habitId}: ${habit.name} (currently ${habit.done ? 'checked' : 'unchecked'})`);
 
+    // Store the original state for rollback
+    const originalDone = habit.done;
+
     try {
-      if (habit.done) {
+      // Update UI optimistically first
+      setHabits(habits.map(h => 
+        h.id === habitId ? { ...h, done: !h.done } : h
+      ));
+
+      if (originalDone) {
         // Uncheck: delete today's log
         console.log(`❌ Unchecking habit ${habitId} - deleting today's log`);
         await deleteTodayLog(habitId);
@@ -122,14 +167,16 @@ export default function HabitPage() {
         await createTodayLog(habitId);
       }
       
-      // Update UI
-      setHabits(habits.map(h => 
-        h.id === habitId ? { ...h, done: !h.done } : h
-      ));
       console.log(`🔄 UI updated for habit ${habitId}`);
     } catch (error) {
       console.error("Habit toggle error:", error);
-      alert("Failed to update habit status");
+      
+      // Rollback UI on error
+      setHabits(habits.map(h => 
+        h.id === habitId ? { ...h, done: originalDone } : h
+      ));
+      
+      alert("Failed to update habit status. Please try again.");
     }
   };
 
@@ -143,7 +190,6 @@ export default function HabitPage() {
       console.log(`📝 Creating log for habit ${habitId} at ${completedTime}`);
       
       const payload = {
-        habit_id: habitId,
         completed_date: completedTime
       };
       
@@ -151,7 +197,10 @@ export default function HabitPage() {
       
       const response = await fetch(API_ENDPOINTS.habitLogs(habitId), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          'Authorization': `Bearer ${session?.access_token}`  // add JWT token
+        },
         body: JSON.stringify(payload)
       });
       
@@ -175,7 +224,12 @@ export default function HabitPage() {
   const deleteTodayLog = async (habitId: number) => {
     try {
       // Get today's logs and delete them
-      const response = await fetch(API_ENDPOINTS.habitLogs(habitId));
+      const response = await fetch(API_ENDPOINTS.habitLogs(habitId), {
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,  // add JWT token
+          'Content-Type': 'application/json'
+        }
+      });
       if (!response.ok) return;
       
       const logs: HabitLog[] = await response.json();
@@ -186,7 +240,9 @@ export default function HabitPage() {
       // Filter today's logs for deletion (use same logic as checkTodayCompletion)
       const todayLogs = logs.filter((log) => {
         const logDate = new Date(log.completed_date);
-        const logDateStr = `${logDate.getFullYear()}-${String(logDate.getMonth() + 1).padStart(2, '0')}-${String(logDate.getDate()).padStart(2, '0')}`;
+        // Convert UTC date to local date for comparison
+        const logLocalDate = new Date(logDate.getTime() - (logDate.getTimezoneOffset() * 60000));
+        const logDateStr = `${logLocalDate.getFullYear()}-${String(logLocalDate.getMonth() + 1).padStart(2, '0')}-${String(logLocalDate.getDate()).padStart(2, '0')}`;
         return logDateStr === todayStr;
       });
       
@@ -196,7 +252,11 @@ export default function HabitPage() {
       for (const log of todayLogs) {
         console.log(`🗑️ Deleting log ${log.id} (${log.completed_date})`);
         const deleteResponse = await fetch(API_ENDPOINTS.habitLogById(log.id), {
-          method: "DELETE"
+          method: "DELETE",
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,  // add JWT token
+            'Content-Type': 'application/json'
+          }
         });
         
         if (!deleteResponse.ok) {
@@ -218,7 +278,10 @@ export default function HabitPage() {
     try {
       const response = await fetch(API_ENDPOINTS.HABITS, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          'Authorization': `Bearer ${session?.access_token}`  // add JWT token
+        },
         body: JSON.stringify({
           name: newHabit.trim(),
           description: "",
@@ -244,7 +307,11 @@ export default function HabitPage() {
     
     try {
       const response = await fetch(API_ENDPOINTS.habitById(habitId), {
-        method: "DELETE"
+        method: "DELETE",
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,  // add JWT token
+          'Content-Type': 'application/json'
+        }
       });
       
       if (!response.ok) throw new Error("Habit deletion failed");
@@ -258,9 +325,7 @@ export default function HabitPage() {
 
 
 
-  // Calculate completed habits and percentage
-  const done = habits.filter(h => h.done).length;
-  const percent = habits.length ? Math.round((done / habits.length) * 100) : 0;
+
 
   // Loading display
   if (loading) {
@@ -369,5 +434,14 @@ export default function HabitPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Main component with authentication protection
+export default function HabitPage() {
+  return (
+    <ProtectedRoute>
+      <HabitContent />
+    </ProtectedRoute>
   );
 }

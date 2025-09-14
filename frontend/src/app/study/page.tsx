@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { PlusIcon, TrashIcon, BookOpenIcon } from "@heroicons/react/24/outline";
 import { API_ENDPOINTS } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";  // import authentication context
+import ProtectedRoute from "@/components/ProtectedRoute";  // import protected route component
 
 // define interfaces for type safety
 interface Subject {
@@ -21,15 +23,21 @@ interface StudyLog {
 }
 
 // load subjects with timeout and error handling
-async function fetchSubjects() {
+async function fetchSubjects(token: string) {
   try {
     console.log("🔄 Fetching subjects from backend..."); // debug log
     const controller = new AbortController(); // create timeout controller
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
     
-    const res = await fetch("http://127.0.0.1:8000/subjects", {
+    const res = await fetch(API_ENDPOINTS.SUBJECTS, {
+      headers: {
+        'Authorization': `Bearer ${token}`,  // add JWT token to request
+        'Content-Type': 'application/json'
+      },
       signal: controller.signal, // attach timeout signal
-    });    clearTimeout(timeoutId); // clear timeout on success
+    });
+    
+    clearTimeout(timeoutId); // clear timeout on success
     
     if (!res.ok) {
       console.error("❌ Failed to fetch subjects:", res.status);
@@ -54,15 +62,21 @@ async function fetchSubjects() {
 }
 
 // load study logs with timeout and error handling
-async function fetchStudyLogs() {
+async function fetchStudyLogs(token: string) {
   try {
     console.log("🔄 Fetching study logs from backend..."); // debug log
     const controller = new AbortController(); // create timeout controller
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
     
-    const res = await fetch("http://127.0.0.1:8000/study-sessions", {
+    const res = await fetch(API_ENDPOINTS.STUDY_SESSIONS, {
+      headers: {
+        'Authorization': `Bearer ${token}`,  // add JWT token to request
+        'Content-Type': 'application/json'
+      },
       signal: controller.signal, // attach timeout signal
-    });    clearTimeout(timeoutId); // clear timeout on success
+    });
+    
+    clearTimeout(timeoutId); // clear timeout on success
     
     if (!res.ok) {
       console.error("❌ Failed to fetch study logs:", res.status);
@@ -86,7 +100,8 @@ async function fetchStudyLogs() {
   }
 }
 
-export default function StudyPage() {
+function StudyContent() {
+  const { user, session } = useAuth(); // get authentication state
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [logs, setLogs] = useState<StudyLog[]>([]);
   const [newLog, setNewLog] = useState({ subject_id: "", minutes: "", note: "" });
@@ -95,10 +110,20 @@ export default function StudyPage() {
   // fetch subjects and study log when loading the page
   useEffect(() => {
     async function loadData() {
+      // check if user is authenticated before making API calls
+      if (!user || !session) {
+        console.log('Study: No user or session', { user: !!user, session: !!session });
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         console.log("Fetching data from backend..."); // debug log
-        const [subjectList, logList] = await Promise.all([fetchSubjects(), fetchStudyLogs()]);
+        const [subjectList, logList] = await Promise.all([
+          fetchSubjects(session.access_token), 
+          fetchStudyLogs(session.access_token)
+        ]);
         console.log("Data received:", { subjectList, logList }); // debug log
         setSubjects(subjectList);
         setLogs(logList);
@@ -112,7 +137,7 @@ export default function StudyPage() {
       }
     }
     loadData();
-  }, []);
+  }, [user, session]); // add dependencies for authentication state
 
   // add study log
   const addLog = async () => {
@@ -120,6 +145,12 @@ export default function StudyPage() {
     
     if (!newLog.subject_id || !newLog.minutes) {
       alert("Please select a subject and enter study time.");
+      return;
+    }
+
+    // check authentication before making API call
+    if (!session) {
+      alert("Please log in to add study logs.");
       return;
     }
 
@@ -134,7 +165,10 @@ export default function StudyPage() {
       
       const res = await fetch(API_ENDPOINTS.STUDY_SESSIONS, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          'Authorization': `Bearer ${session.access_token}`  // add JWT token
+        },
         body: JSON.stringify(payload)
       });
       
@@ -161,9 +195,19 @@ export default function StudyPage() {
   const deletelog = async(logId : number) => { // receive the log ID to delete with the logId parameter
     if(!confirm("Are you sure to delete this record?")) return; // confirms the deletion
 
+    // check authentication before making API call
+    if (!session) {
+      alert("Please log in to delete study logs.");
+      return;
+    }
+
     try{
-      const res = await fetch(`http://127.0.0.1:8000/study-sessions/${logId}`, { // call the delete API
+      const res = await fetch(`${API_ENDPOINTS.STUDY_SESSIONS}/${logId}`, { // call the delete API
         method: "DELETE", // use the HTTP DELETE method
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,  // add JWT token
+          'Content-Type': 'application/json'
+        }
       });      if(res.ok){
         setLogs(logs => logs.filter(log => log.id !== logId)); // delete the log from UI
         alert("Study record has been deleted successfully.") // success message
@@ -176,21 +220,17 @@ export default function StudyPage() {
     }
   };
 
-  // study gaal percentage
-  const studyGoal = 180;
-  const todayStudy = logs.reduce((sum, log) => sum + log.duration_minutes, 0);
-  const percent = Math.round((todayStudy / studyGoal) * 100);
-  const cappedPercent = Math.min(percent, 100); // limit so that the bar does not exceeds 100%
+
 
   if (loading) return <div className="p-8 text-center text-gray-400">Loading...</div>;
 
   return (
     <div className="py-8">
       <div className="max-w-4xl mx-auto p-4">
-        {/* 페이지 제목 */}
+        {/* page title */}
         <h1 className="text-3xl font-bold mb-8 text-gray-900 text-center">📚 Study Tracker</h1>
         
-        {/* 공부 기록 추가 카드 */}
+        {/* study log addition card */}
         <div className="bg-white rounded-xl shadow p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4 text-gray-700 flex items-center">
             <PlusIcon className="w-5 h-5 mr-2 text-blue-500" />
@@ -230,7 +270,7 @@ export default function StudyPage() {
           </div>
         </div>
 
-        {/* 공부 기록 목록 카드 */}
+        {/* study logs card */}
         {logs.length > 0 ? (
           <div className="bg-white rounded-xl shadow p-6">
             <h2 className="text-lg font-semibold mb-4 text-gray-700 flex items-center">
@@ -251,7 +291,7 @@ export default function StudyPage() {
                         </span>
                       </div>
                       {log.notes && (
-                        <p className="text-gray-600 mb-2 italic">"{log.notes}"</p>
+                        <p className="text-gray-600 mb-2 italic">&ldquo;{log.notes}&rdquo;</p>
                       )}
                       <div className="text-xs text-gray-500">
                         📅 {new Date(log.created_at).toLocaleDateString()} at {new Date(log.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
@@ -268,7 +308,7 @@ export default function StudyPage() {
                 </div>
               ))}
             </div>
-            {/* 총 공부 시간 요약 */}
+            {/* total study time summary */}
             <div className="mt-4 pt-4 border-t border-blue-200">
               <div className="text-center">
                 <span className="text-blue-700 font-semibold">
@@ -287,7 +327,7 @@ export default function StudyPage() {
           </div>
         )}
 
-        {/* 안내 메시지 */}
+        {/* explanation msg */}
         <div className="mt-8 text-center">
           <p className="text-gray-400 text-sm">
             💡 <strong>Tip:</strong> Track your study sessions to see your progress. <br />
@@ -296,5 +336,14 @@ export default function StudyPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Main component wrapped with authentication protection
+export default function StudyPage() {
+  return (
+    <ProtectedRoute>
+      <StudyContent />
+    </ProtectedRoute>
   );
 }

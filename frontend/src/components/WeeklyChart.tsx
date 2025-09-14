@@ -1,24 +1,37 @@
 import { Bar } from "react-chartjs-2";
-import { Chart, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
-import { useState, useEffect } from "react";
+import { Chart, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ChartData } from "chart.js";
+import { useState, useEffect, useCallback } from "react";
 import { API_ENDPOINTS } from "@/lib/api";
 
 Chart.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
+// Props interface for JWT token
+interface WeeklyChartProps {
+  token?: string;
+}
+
+// Chart data type
+type ChartDataType = ChartData<"bar", number[], string>;
+
 // add data state to WeeklyChart component
-export default function WeeklyChart() {
-  const [chartData, setChartData] = useState(null); // chart data state
+export default function WeeklyChart({ token }: WeeklyChartProps) {
+  const [chartData, setChartData] = useState<ChartDataType | null>(null); // chart data state
   const [loading, setLoading] = useState(true); // loading state
 
-  // load the data when mounting the component
-  useEffect(() =>{
-    fetchWeeklyData();
-  }, []);
-
   // function to load the weekly data from backend
-  const fetchWeeklyData = async() => {
+  const fetchWeeklyData = useCallback(async() => {
+    if (!token) {
+      console.log('WeeklyChart: No token provided');
+      return;
+    }
+
     try{
-  const response = await fetch(API_ENDPOINTS.DASHBOARD_WEEKLY);
+      const response = await fetch(API_ENDPOINTS.DASHBOARD_WEEKLY, {
+        headers: {
+          'Authorization': `Bearer ${token}`,  // add JWT token
+          'Content-Type': 'application/json'
+        }
+      });
       if(!response.ok) throw new Error("Failed to fetch weekly data");
 
       const data = await response.json();
@@ -65,7 +78,14 @@ export default function WeeklyChart() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  // load the data when mounting the component
+  useEffect(() =>{
+    if (token) {
+      fetchWeeklyData();
+    }
+  }, [token, fetchWeeklyData]);
 
   // displat when loading
   if(loading){
@@ -77,7 +97,7 @@ export default function WeeklyChart() {
   // chart rendering
   return(
     <div className = "bg-white rounded shadow p-4">
-      <Bar data = {chartData} options = {options} />
+      {chartData && <Bar data = {chartData} options = {options} />}
       </div>
   );
 }

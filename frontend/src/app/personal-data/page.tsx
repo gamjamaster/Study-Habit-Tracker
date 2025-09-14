@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { API_ENDPOINTS } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import StudyStatsChart from "@/components/analytics/StudyStatsChart";
 import HabitCompletionChart from "@/components/analytics/HabitCompletionChart";
 import CorrelationChart from "@/components/analytics/CorrelationChart";
@@ -54,7 +56,8 @@ interface CorrelationData {
   }>;
 }
 
-export default function PersonalDataPage() {
+function PersonalDataContent() {
+  const { user, session } = useAuth(); // get authentication state
   const [studyStats, setStudyStats] = useState<StudyStats | null>(null);
   const [habitStats, setHabitStats] = useState<HabitStats | null>(null);
   const [correlationData, setCorrelationData] = useState<CorrelationData | null>(null);
@@ -63,14 +66,26 @@ export default function PersonalDataPage() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchAnalyticsData = useCallback(async () => {
+    // check authentication before making API calls
+    if (!user || !session) {
+      console.log('PersonalData: No user or session', { user: !!user, session: !!session });
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
       
+      const headers = {
+        'Authorization': `Bearer ${session.access_token}`, // add JWT token
+        'Content-Type': 'application/json'
+      };
+      
       const [studyResponse, habitResponse, correlationResponse] = await Promise.all([
-        fetch(`${API_ENDPOINTS.ANALYTICS_STUDY_STATS}?period=${period}`),
-        fetch(`${API_ENDPOINTS.ANALYTICS_HABIT_COMPLETION}?period=${period}`),
-        fetch(`${API_ENDPOINTS.ANALYTICS_CORRELATION}`)
+        fetch(`${API_ENDPOINTS.ANALYTICS_STUDY_STATS}?period=${period}`, { headers }),
+        fetch(`${API_ENDPOINTS.ANALYTICS_HABIT_COMPLETION}?period=${period}`, { headers }),
+        fetch(`${API_ENDPOINTS.ANALYTICS_CORRELATION}`, { headers })
       ]);
 
       if (studyResponse.ok) {
@@ -93,7 +108,7 @@ export default function PersonalDataPage() {
     } finally {
       setLoading(false);
     }
-  }, [period]);
+  }, [period, user, session]);
 
   useEffect(() => {
     fetchAnalyticsData();
@@ -266,5 +281,14 @@ export default function PersonalDataPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// Main component with authentication protection
+export default function PersonalDataPage() {
+  return (
+    <ProtectedRoute>
+      <PersonalDataContent />
+    </ProtectedRoute>
   );
 }

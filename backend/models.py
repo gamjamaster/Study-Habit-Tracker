@@ -8,15 +8,19 @@ class Subject(Base): # creates table "Subject"
     __tablename__ = "subjects" # name of the table in the db
 
     id = Column(Integer, primary_key = True, index = True) # every subject has an unique id
+    user_id = Column(String, index = True)
     name = Column(String, index = True) # subject name
     color = Column(String) # color of each subject
     created_at = Column(DateTime, default = datetime.now) # records when the subject has been created
+
+    study_sessions = relationship("StudySession", back_populates = "subject")
 
 # study session table
 class StudySession(Base): # table to keep track of study sessions
     __tablename__ = "study_sessions" # name of the table in the db
 
     id = Column(Integer, primary_key = True, index = True) 
+    user_id = Column(String, index=True)
     subject_id = Column(Integer, ForeignKey("subjects.id")) # keeps the subject that has been studied
                                                            # connects with id of subject table
     start_time = Column(DateTime, nullable=True) # study begun at
@@ -25,36 +29,43 @@ class StudySession(Base): # table to keep track of study sessions
     notes = Column(Text, nullable = True) # notes on what has been studied, used text type as it may be long
                                           # nullable = True: notes can be empty
     created_at = Column(DateTime, default = datetime.now)
-    subject = relationship("Subject", lazy="joined")
+    
+    subject = relationship("Subject", back_populates="study_sessions")
 
 # habit table
 class Habit(Base):
     __tablename__ = "habits"
 
     id = Column(Integer, primary_key = True, index = True)
+    user_id = Column(String, index=True)
     name = Column(String, index = True) # name of the habit
     description = Column(Text, nullable = True) # description of the habit
     target_frequency = Column(Integer, default=7) # target frequency per week (default 7)
     color = Column(String, default="#10B981") # color of each habit (default green)
     created_at = Column(DateTime, default = datetime.now)
 
+    logs = relationship("HabitLog", back_populates="habit")
+
 # habit log table
 class HabitLog(Base):
     __tablename__ = "habit_logs"
 
     id = Column(Integer, primary_key = True, index = True)
+    user_id = Column(String, index=True)
     habit_id = Column(Integer, ForeignKey("habits.id")) # which habit it is from the habit column
     completed_date = Column(DateTime) # when the habit has been completed
     notes = Column(Text, nullable = True) # notes on how the habit has been completed
     created_at = Column(DateTime, default = datetime.now)
     habit = relationship("Habit", lazy="joined")
 
+    habit = relationship("Habit", back_populates="logs")
+
 # goal table
 class Goal(Base):
     __tablename__ = "goals"
 
     id = Column(Integer, primary_key = True, index = True) # unique ID
-    user_id = Column(String, default="1") # user ID
+    user_id = Column(String, index=True) # user ID
     goal_type = Column(String, index = True) # goal type: "daily_study", "weekly_study", "monthly_study", "daily_habit", "weekly_habit"
     target_value = Column(Integer) # goal value
     target_unit = Column(String, default="minutes") # metrics: "minutes", "sessions", "habits"

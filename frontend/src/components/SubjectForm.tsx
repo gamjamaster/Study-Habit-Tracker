@@ -1,16 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { API_ENDPOINTS } from "@/lib/api";
 
 type SubjectFormProps = {
   onCreated?: (data: { id: number; name: string; color: string; created_at: string }) => void;
   onUpdated?: (data: { id: number; name: string; color: string; created_at: string }) => void;
   editSubject?: { id: number; name: string; color: string; created_at: string } | null;
   onCancel?: () => void;
+  token?: string; // JWT token for authentication
 };
 
 // component for subject creation and editing form
-export default function SubjectForm({ onCreated, onUpdated, editSubject, onCancel }: SubjectFormProps) {
+export default function SubjectForm({ onCreated, onUpdated, editSubject, onCancel, token }: SubjectFormProps) {
   const [name, setName] = useState("");
   const [color, setColor] = useState("#FFB300");
   const [loading, setLoading] = useState(false);
@@ -33,12 +35,22 @@ export default function SubjectForm({ onCreated, onUpdated, editSubject, onCance
     setLoading(true);
     setError("");
 
+    // check authentication before making API calls
+    if (!token) {
+      setError("Authentication required. Please log in.");
+      setLoading(false);
+      return;
+    }
+
     try {
       if (editSubject) {
         // Update existing subject
-        const res = await fetch(`http://127.0.0.1:8000/subjects/${editSubject.id}`, {
+        const res = await fetch(`${API_ENDPOINTS.SUBJECTS}/${editSubject.id}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            'Authorization': `Bearer ${token}` // add JWT token
+          },
           body: JSON.stringify({ name, color }),
         });
         if (!res.ok) throw new Error("Failed to update subject");
@@ -48,9 +60,12 @@ export default function SubjectForm({ onCreated, onUpdated, editSubject, onCance
         }
       } else {
         // Create new subject
-        const res = await fetch("http://127.0.0.1:8000/subjects", {
+        const res = await fetch(API_ENDPOINTS.SUBJECTS, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            'Authorization': `Bearer ${token}` // add JWT token
+          },
           body: JSON.stringify({ name, color }),
         });
         if (!res.ok) throw new Error("Failed to create a new subject");

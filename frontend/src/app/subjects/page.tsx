@@ -1,7 +1,10 @@
 "use client"; // declare this as a client component in Next.js
 
-import { useState, useEffect } from "react"; // import React hooks for state and effect management
+import { useState, useEffect, useCallback } from "react"; // import React hooks for state and effect management
 import SubjectForm from "@/components/SubjectForm"; // import the subject creation form component
+import { useAuth } from "@/contexts/AuthContext"; // import authentication context
+import ProtectedRoute from "@/components/ProtectedRoute"; // import protected route component
+import { API_ENDPOINTS } from "@/lib/api"; // import API endpoints
 // Removed unused icons to satisfy lint rules
 
 // define TypeScript interface for subject data structure
@@ -12,8 +15,9 @@ interface Subject {
     created_at: string; // timestamp when the subject was created
 }
 
-// main component function for the subjects page
-export default function SubjectsPage() {
+// main content component for the subjects page  
+function SubjectsContent() {
+    const { user, session } = useAuth(); // get authentication state
     // state hook to store the list of subjects, initialized as empty array with Subject type
     const [subjects, setSubjects] = useState<Subject[]>([]);
     // state hook to manage loading state while making API requests
@@ -25,17 +29,24 @@ export default function SubjectsPage() {
     // state hook to track which subject is being edited
     const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
 
-    // useEffect hook to run code when component mounts (loads for the first time)
-    useEffect(() => {
-        fetchSubjects(); // call function to fetch subjects from backend
-    }, []); // empty dependency array means this runs only once when component mounts
-
     // async function to fetch the list of subjects from the backend API
-    const fetchSubjects = async () => {
+    const fetchSubjects = useCallback(async () => {
+        // check authentication before making API calls
+        if (!session) {
+            console.log('Subjects: No session available');
+            setLoading(false);
+            return;
+        }
+
         try { // try block to handle potential errors
             setLoading(true); // set loading state to true when starting the API request
-            // make GET request to the backend subjects endpoint
-            const response = await fetch("http://127.0.0.1:8000/subjects");
+            // make GET request to the backend subjects endpoint with JWT token
+            const response = await fetch(API_ENDPOINTS.SUBJECTS, {
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`, // add JWT token
+                    'Content-Type': 'application/json'
+                }
+            });
             // check if the HTTP response status is not ok (not 200-299 range)
             if (!response.ok) {
                 // throw an error if the response is not successful
@@ -53,7 +64,14 @@ export default function SubjectsPage() {
         } finally { // finally block runs regardless of success or failure
             setLoading(false); // set loading state to false when request completes
         }
-    };
+    }, [session]); // dependency array for useCallback
+
+    // useEffect hook to run code when component mounts (loads for the first time)
+    useEffect(() => {
+        if (user && session) {
+            fetchSubjects(); // call function to fetch subjects from backend
+        }
+    }, [user, session, fetchSubjects]); // dependency array includes user, session, and fetchSubjects
 
     // async function to delete a subject by its ID
     const deleteSubject = async (subjectId: number) => {
@@ -62,10 +80,20 @@ export default function SubjectsPage() {
             return; // exit function if user cancels
         }
 
+        // check authentication before making API calls
+        if (!session) {
+            alert("Please log in to delete subjects.");
+            return;
+        }
+
         try { // try block for error handling
-            // make DELETE request to backend with the subject ID in URL
-            const response = await fetch(`http://127.0.0.1:8000/subjects/${subjectId}`, {
+            // make DELETE request to backend with the subject ID in URL and JWT token
+            const response = await fetch(`${API_ENDPOINTS.SUBJECTS}/${subjectId}`, {
                 method: "DELETE", // specify HTTP DELETE method
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`, // add JWT token
+                    'Content-Type': 'application/json'
+                }
             });
 
             // check if the delete request was not successful
@@ -174,6 +202,7 @@ export default function SubjectsPage() {
                             onUpdated={handleSubjectUpdated}
                             editSubject={editingSubject}
                             onCancel={handleCancelEdit}
+                            token={session?.access_token}
                         />
                     </div>
                 )}
@@ -294,4 +323,13 @@ export default function SubjectsPage() {
             </div> {/* end of main container */}
         </div> // end of page container
     ); // end of return statement
-} // end of SubjectsPage component function
+} // end of SubjectsContent component function
+
+// Main component with authentication protection
+export default function SubjectsPage() {
+    return (
+        <ProtectedRoute>
+            <SubjectsContent />
+        </ProtectedRoute>
+    );
+}
