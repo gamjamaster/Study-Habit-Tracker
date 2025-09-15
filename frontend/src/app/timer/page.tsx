@@ -1,15 +1,18 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { PlayIcon, PauseIcon, StopIcon, ClockIcon } from '@heroicons/react/24/solid';
 import { API_ENDPOINTS } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 interface Subject {
   id: number;
   name: string;
 }
 
-export default function Timer() {
+function TimerContent() {
+  const { session } = useAuth();
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -18,10 +21,32 @@ export default function Timer() {
   const [saving, setSaving] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Define fetchSubjects function
+  const fetchSubjects = useCallback(async () => {
+    if (!session?.access_token) return;
+    
+    try {
+      const response = await fetch(API_ENDPOINTS.SUBJECTS, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setSubjects(data);
+      }
+    } catch (error) {
+      console.error('Error fetching subjects:', error);
+    }
+  }, [session]);
+
   // Fetch subjects
   useEffect(() => {
-    fetchSubjects();
-  }, []);
+    if (session?.access_token) {
+      fetchSubjects();
+    }
+  }, [session, fetchSubjects]);
 
   // Prevent page scrolling while on the timer page
   useEffect(() => {
@@ -54,18 +79,6 @@ export default function Timer() {
     };
   }, [isRunning, isPaused]);
 
-  const fetchSubjects = async () => {
-    try {
-      const response = await fetch('http://localhost:8000/subjects/');
-      if (response.ok) {
-        const data = await response.json();
-        setSubjects(data);
-      }
-    } catch (error) {
-      console.error('Error fetching subjects:', error);
-    }
-  };
-
   const startTimer = () => {
     if (!selectedSubject) {
       alert('Please select a subject first!');
@@ -94,12 +107,23 @@ export default function Timer() {
       return;
     }
 
+    if (Math.floor(time / 60) < 1) {
+      alert("Study sessions must be at least 1 minute long.");
+      return;
+    }
+
+    if (!session?.access_token) {
+      alert('Authentication required. Please log in.');
+      return;
+    }
+
     setSaving(true);
     try {
       const response = await fetch(API_ENDPOINTS.STUDY_SESSIONS, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           subject_id: parseInt(selectedSubject),
@@ -301,5 +325,13 @@ export default function Timer() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Timer() {
+  return (
+    <ProtectedRoute>
+      <TimerContent />
+    </ProtectedRoute>
   );
 }

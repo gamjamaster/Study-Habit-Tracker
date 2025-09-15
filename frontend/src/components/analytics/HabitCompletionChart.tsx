@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Doughnut, Bar } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, TooltipItem } from 'chart.js';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
@@ -73,7 +73,7 @@ export default function HabitCompletionChart({ data }: HabitCompletionProps) {
       },
       tooltip: {
         callbacks: {
-          label: function(context: any) {
+          label: function(context: TooltipItem<'doughnut'>) {
             return `${context.label}: ${context.parsed} completions`;
           }
         }
@@ -90,7 +90,7 @@ export default function HabitCompletionChart({ data }: HabitCompletionProps) {
       },
       tooltip: {
         callbacks: {
-          label: function(context: any) {
+          label: function(context: TooltipItem<'bar'>) {
             return `${context.parsed.y} completions`;
           }
         }

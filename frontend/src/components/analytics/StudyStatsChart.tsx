@@ -12,7 +12,8 @@ import {
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  TooltipItem
 } from 'chart.js';
 
 ChartJS.register(
@@ -109,7 +110,7 @@ export default function StudyStatsChart({ data }: StudyStatsProps) {
       },
       tooltip: {
         callbacks: {
-          label: function(context: any) {
+          label: function(context: TooltipItem<'bar'>) {
             return `${context.parsed.y} minutes`;
           }
         }

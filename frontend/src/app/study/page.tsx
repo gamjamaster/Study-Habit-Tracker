@@ -148,6 +148,12 @@ function StudyContent() {
       return;
     }
 
+    // check if study time is less than 1 minute
+    if (Number(newLog.minutes) < 1) {
+      alert("Study sessions must be at least 1 minute long.");
+      return;
+    }
+
     // check authentication before making API call
     if (!session) {
       alert("Please log in to add study logs.");

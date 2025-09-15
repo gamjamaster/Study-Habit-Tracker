@@ -49,6 +49,7 @@ export default function SignupForm() {
         setMessage('Account created successfully! Please check your email to verify your account.')
       }
     } catch (error) {
+      console.error('Signup error:', error);
       setError('An unexpected error occurred')
     } finally {
       setLoading(false)

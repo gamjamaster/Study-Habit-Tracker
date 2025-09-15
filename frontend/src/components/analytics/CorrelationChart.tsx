@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Scatter } from 'react-chartjs-2';
-import { Chart as ChartJS, LinearScale, PointElement, Tooltip, Legend } from 'chart.js';
+import { Chart as ChartJS, LinearScale, PointElement, Tooltip, Legend, TooltipItem } from 'chart.js';
 
 ChartJS.register(LinearScale, PointElement, Tooltip, Legend);
 
@@ -44,7 +44,7 @@ export default function CorrelationChart({ data }: CorrelationProps) {
       },
       tooltip: {
         callbacks: {
-          label: function(context: any) {
+          label: function(context: TooltipItem<'scatter'>) {
             return `Study: ${context.parsed.x} min, Habits: ${context.parsed.y}`;
           }
         }

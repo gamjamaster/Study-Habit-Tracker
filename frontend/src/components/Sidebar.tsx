@@ -32,7 +32,7 @@ const navItems = [
 
 // make a responsive sidebar component
 export default function Sidebar() {
-  const { user, signOut, loading } = useAuth();
+  const { user, signOut } = useAuth();
   const pathname = usePathname(); // store the directory of the current page in the pathname variable
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // mobile menu state
 
