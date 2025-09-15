@@ -3,7 +3,6 @@ services:
     name: study-habit-backend
     env: python
     plan: free
-    rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
@@ -12,6 +11,6 @@ services:
       - key: SUPABASE_JWT_SECRET
         value: VdZMaB6SQCCe1Q9lQRCQ6LJpFLNrGVVKQOzMRmF7lzs
       - key: DATABASE_URL
-        value: postgresql://postgres:WrZcn93pXEcWtuAb@db.vaeevhndniqddgiaxcrp.supabase.co:5432/postgres
+        value: postgresql://postgres:[YOUR_PASSWORD]@db.vaeevhndniqddgiaxcrp.supabase.co:5432/postgres
       - key: PYTHON_VERSION
         value: 3.11.0
