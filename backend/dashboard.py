@@ -21,7 +21,7 @@ def dashboard_summary(
         # Get today's study time for the current user
         study_today = db.query(func.sum(models.StudySession.duration_minutes))\
             .filter(models.StudySession.user_id == user_id)\
-            .filter(func.date(models.StudySession.created_at) == today)\
+            .filter(func.date_trunc('day', models.StudySession.created_at) == today)\
             .scalar() or 0
 
         study_goal = 180
@@ -32,8 +32,7 @@ def dashboard_summary(
             .join(models.Habit, models.HabitLog.habit_id == models.Habit.id)\
             .filter(models.Habit.user_id == user_id)\
             .filter(
-                (func.date(models.HabitLog.completed_date) == today) |
-                (func.date(models.HabitLog.completed_date, 'localtime') == today)
+                (func.date_trunc('day', models.HabitLog.completed_date) == today)
             )\
             .scalar() or 0
 
@@ -74,7 +73,7 @@ def dashboard_weekly(
 
             # load the total study time for that day for current user only
             study_time = db.query(func.sum(models.StudySession.duration_minutes))\
-                .filter(func.date(models.StudySession.created_at) == target_date)\
+                .filter(func.date_trunc('day', models.StudySession.created_at) == target_date)\
                 .filter(models.StudySession.user_id == user_id)\
                 .scalar() or 0
             
@@ -83,8 +82,7 @@ def dashboard_weekly(
             habit_count = db.query(func.count(models.HabitLog.id))\
                 .join(models.Habit, models.HabitLog.habit_id == models.Habit.id)\
                 .filter(
-                    (func.date(models.HabitLog.completed_date) == target_date) |
-                    (func.date(models.HabitLog.completed_date, 'localtime') == target_date)
+                    (func.date_trunc('day', models.HabitLog.completed_date) == target_date)
                 )\
                 .filter(models.Habit.user_id == user_id)\
                 .scalar() or 0

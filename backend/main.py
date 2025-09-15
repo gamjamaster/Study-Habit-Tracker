@@ -330,14 +330,14 @@ def get_study_statistics(
 
             # daily study time for current user only
             daily_stats = db.query(
-                func.DATE(StudySession.created_at).label('date'),
+                func.date_trunc('day', StudySession.created_at).label('date'),
                 func.sum(StudySession.duration_minutes).label('total_minutes'),
                 func.count(StudySession.id).label('session_count')
             ).filter(
                 StudySession.created_at >= start_date,
                 StudySession.user_id == user_id  # add user filtering
             ).group_by(
-                func.DATE(StudySession.created_at)
+                func.date_trunc('day', StudySession.created_at)
             ).all()
         
         elif period == "month":
@@ -346,14 +346,14 @@ def get_study_statistics(
 
             # daily study time for current user only
             daily_stats = db.query(
-                func.DATE(StudySession.created_at).label('date'),
+                func.date_trunc('day', StudySession.created_at).label('date'),
                 func.sum(StudySession.duration_minutes).label('total_minutes'),
                 func.count(StudySession.id).label('session_count')
             ).filter(
                 StudySession.created_at >= start_date,
                 StudySession.user_id == user_id  # add user filtering
             ).group_by(
-                func.DATE(StudySession.created_at)
+                func.date_trunc('day', StudySession.created_at)
             ).all()
 
         # stats per subject for current user only
@@ -409,13 +409,13 @@ def get_dashboard_summary(
         # calculates today's study time of the day (PostgreSQL compatible)
         study_today = db.query(StudySession).filter(
             StudySession.user_id == user_id,
-            func.DATE(StudySession.created_at) == today
+            func.date_trunc('day', StudySession.created_at) == today
         ).with_entities(func.sum(StudySession.duration_minutes)).scalar() or 0
         
         # habit achieved today (PostgreSQL compatible)
         habits_done = db.query(HabitLog).filter(
             HabitLog.user_id == user_id,
-            func.DATE(HabitLog.completed_date) == today
+            func.date_trunc('day', HabitLog.completed_date) == today
         ).count()
         
         # total number of habits
@@ -451,13 +451,13 @@ def get_habit_completion_stats(
         total_habits = db.query(func.count(Habit.id)).filter(Habit.user_id == user_id).scalar()
 
         daily_completion = db.query(
-            func.DATE(HabitLog.completed_date).label('date'),
+            func.date_trunc('day', HabitLog.completed_date).label('date'),
             func.count(func.distinct(HabitLog.habit_id)).label('completed_habits')
         ).join(Habit, HabitLog.habit_id == Habit.id).filter(
             Habit.user_id == user_id,  # filter by user_id
             HabitLog.completed_date >= start_date
         ).group_by(
-            func.DATE(HabitLog.completed_date)
+            func.date_trunc('day', HabitLog.completed_date)
         ).all()
 
         # completion rate by day of the week for current user only
@@ -523,23 +523,23 @@ def get_study_habit_correlation(
 
         # Daily study time and number of habits completed
         correlation_data = db.query(
-            func.DATE(StudySession.created_at).label('date'),
+            func.date_trunc('day', StudySession.created_at).label('date'),
             func.sum(StudySession.duration_minutes).label('study_minutes')
         ).filter(
             StudySession.user_id == user_id,  # filter by user_id
             StudySession.created_at >= start_date
         ).group_by(
-            func.DATE(StudySession.created_at)
+            func.date_trunc('day', StudySession.created_at)
         ).subquery()
 
         habit_data = db.query(
-            func.DATE(HabitLog.completed_date).label('date'),
+            func.date_trunc('day', HabitLog.completed_date).label('date'),
             func.count(HabitLog.id).label('habit_count')
         ).join(Habit, HabitLog.habit_id == Habit.id).filter(
             Habit.user_id == user_id,  # filter by user_id
             HabitLog.completed_date >= start_date
         ).group_by(
-            func.DATE(HabitLog.completed_date)
+            func.date_trunc('day', HabitLog.completed_date)
         ).subquery()
 
         # combined data
@@ -686,15 +686,15 @@ def get_activity_heatmap(
     
     # Get study sessions for the year (current user only)
     study_sessions = db.query(StudySession).filter(
-        func.DATE(StudySession.created_at) >= start_date,
-        func.DATE(StudySession.created_at) <= end_date,
+        func.date_trunc('day', StudySession.created_at) >= start_date,
+        func.date_trunc('day', StudySession.created_at) <= end_date,
         StudySession.user_id == user_id  # add user filtering
     ).all()
     
     # Get habit logs for the year (current user only)
     habit_logs = db.query(HabitLog).filter(
-        func.DATE(HabitLog.completed_date) >= start_date,
-        func.DATE(HabitLog.completed_date) <= end_date,
+        func.date_trunc('day', HabitLog.completed_date) >= start_date,
+        func.date_trunc('day', HabitLog.completed_date) <= end_date,
         HabitLog.user_id == user_id  # add user filtering
     ).all()
     
