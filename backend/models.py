@@ -73,3 +73,28 @@ class Goal(Base):
     description = Column(Text, nullable = True) # goal explanation (optional)
     is_active = Column(Integer, default=1) # if its active or not (1: active, 0: inactive)
     created_at = Column(DateTime, default = datetime.now) # goal created time
+
+# study group table
+class StudyGroup(Base):
+    __tablename__ = "study_groups"
+
+    id = Column(Integer, primary_key = True, index = True)
+    name = Column(String, index = True) # group name
+    description = Column(Text, nullable = True) # group description
+    created_by = Column(String, index = True) # user ID of the creator
+    created_at = Column(DateTime, default = datetime.now)
+    invite_code = Column(String, unique = True, index = True) # unique invite code for joining
+
+    memberships = relationship("GroupMembership", back_populates="group")
+
+# group membership table
+class GroupMembership(Base):
+    __tablename__ = "group_memberships"
+
+    id = Column(Integer, primary_key = True, index = True)
+    group_id = Column(Integer, ForeignKey("study_groups.id"))
+    user_id = Column(String, index = True)
+    joined_at = Column(DateTime, default = datetime.now)
+    role = Column(String, default = "member") # "admin" or "member"
+
+    group = relationship("StudyGroup", back_populates="memberships")

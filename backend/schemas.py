@@ -134,3 +134,58 @@ class HeatmapResponse(BaseModel):
     year: int
     data: List[HeatmapData]
     summary: dict  # Statistics summary
+
+# Study Group schemas
+class StudyGroupCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+class StudyGroupUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+class StudyGroup(BaseModel):
+    id: int
+    name: str
+    description: Optional[str]
+    created_by: str
+    created_at: datetime
+    invite_code: str
+
+    class Config:
+        from_attributes = True
+
+# Group Membership schemas
+class GroupMembershipCreate(BaseModel):
+    group_id: int
+    user_id: str
+    role: str = "member"
+
+class GroupMembership(BaseModel):
+    id: int
+    group_id: int
+    user_id: str
+    joined_at: datetime
+    role: str
+
+    class Config:
+        from_attributes = True
+
+# Leaderboard schemas
+class LeaderboardEntry(BaseModel):
+    user_id: str
+    user_email: str
+    total_study_minutes: int
+    study_sessions_count: int
+    habit_completion_rate: float
+    total_habits: int
+    completed_habits: int
+    rank: int
+
+class GroupLeaderboardResponse(BaseModel):
+    group_id: int
+    group_name: str
+    leaderboard: List[LeaderboardEntry]
+    total_members: int
+    week_start: str
+    week_end: str

@@ -18,6 +18,7 @@ import {
   UserIcon,
   ArrowRightOnRectangleIcon,
   ArrowLeftOnRectangleIcon,
+  DocumentChartBarIcon,
 } from "@heroicons/react/24/outline";
 
 // array of menu names to be displayed on the sidebar
@@ -28,12 +29,13 @@ const navItems = [
   { name: "Subjects", href: "/subjects", icon: AcademicCapIcon },
   { name: "Habits", href: "/habit", icon: CheckCircleIcon },
   { name: "Calendar", href: "/calendar", icon: CalendarIcon },
-  { name: "Personal Data", href: "/personal-data", icon: UserIcon },
+  { name: "Groups", href: "/groups", icon: UserIcon },
+  { name: "Personal Data", href: "/personal-data", icon: DocumentChartBarIcon },
 ];
 
 // make a responsive sidebar component
 export default function Sidebar() {
-  const { user, signOut } = useAuth();
+  const { user, session, signOut } = useAuth();
   const pathname = usePathname(); // store the directory of the current page in the pathname variable
   const router = useRouter(); // Add router hook
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // mobile menu state
@@ -115,13 +117,20 @@ export default function Sidebar() {
               {/* Sign Out Button */}
               <button
                 onClick={async () => {
+                  console.log('Sign out button clicked');
+                  console.log('Current user before sign out:', user);
+                  console.log('Current session before sign out:', session);
+                  
                   try {
                     const { error } = await signOut();
+                    console.log('Sign out result:', { error });
+                    
                     if (error) {
                       console.error('Sign out error:', error);
                       alert('Failed to sign out. Please try again.');
                       return;
                     }
+                    console.log('Sign out successful, redirecting to login...');
                     // Use Next.js router instead of window.location
                     router.push('/auth/login');
                   } catch (error) {

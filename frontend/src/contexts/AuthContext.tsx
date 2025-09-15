@@ -101,8 +101,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Sign out
   const signOut = async () => {
     console.log('Attempting to sign out...');
+    console.log('Supabase client available:', !!supabase);
+    console.log('Current session before sign out:', session);
+    
     try {
       const { error } = await supabase.auth.signOut()
+      console.log('Supabase sign out response:', { error });
+      
       if (error) {
         console.error('Supabase sign out error:', error);
       } else {

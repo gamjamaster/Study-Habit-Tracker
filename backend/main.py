@@ -40,6 +40,9 @@ app.include_router(habit_router)
 
 app.include_router(study_router)
 
+from groups import router as groups_router
+app.include_router(groups_router)
+
 # creates the table when the server starts
 @app.on_event("startup")
 def startup_event():
