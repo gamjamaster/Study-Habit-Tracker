@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Define heatmap data types
 interface HeatmapData {
@@ -44,6 +45,7 @@ export default function ActivityHeatmap({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<HeatmapData | null>(null);
+  const { session } = useAuth(); // Get authentication session
 
   // Fetch heatmap data from API
   useEffect(() => {
@@ -51,8 +53,19 @@ export default function ActivityHeatmap({
       try {
         setLoading(true);
         const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        
+        // Prepare headers with authentication
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json'
+        };
+        
+        if (session?.access_token) {
+          headers['Authorization'] = `Bearer ${session.access_token}`;
+        }
+        
         const response = await fetch(
-          `${API_BASE_URL}/api/activity-heatmap?year=${year}&activity_type=${activityType}`
+          `${API_BASE_URL}/api/activity-heatmap?year=${year}&activity_type=${activityType}`,
+          { headers }
         );
         
         if (!response.ok) {
@@ -71,7 +84,7 @@ export default function ActivityHeatmap({
     };
 
     fetchHeatmapData();
-  }, [year, activityType]);
+  }, [year, activityType, session]);
 
   // Convert date data to map for fast lookup
   const dataMap = heatmapData?.data.reduce((acc, item) => {
@@ -173,9 +186,11 @@ export default function ActivityHeatmap({
   if (loading) {
     return (
       <div className="bg-white rounded-2xl shadow-md p-6">
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-          <div className="h-32 bg-gray-200 rounded"></div>
+        <div className="flex items-center justify-center min-h-[200px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
         </div>
       </div>
     );

@@ -114,7 +114,12 @@ export default function MyCalendar() { // Function component for the calendar
   const { dayStudySessions, dayHabitLogs } = getSelectedDateData(value);
 
   if (loading) {
-    return <div className="flex justify-center py-8 text-gray-500">Loading calendar...</div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <span className="ml-3 text-gray-600">Loading...</span>
+      </div>
+    );
   }
 
   return (
