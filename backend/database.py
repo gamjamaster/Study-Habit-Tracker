@@ -21,8 +21,11 @@ else:
     # PostgreSQL configuration
     engine = create_engine(
         DATABASE_URL,
-        pool_pre_ping=True,  # 연결 상태 확인
-        pool_recycle=300     # 연결 재사용 시간
+        pool_pre_ping=True,      # 연결 상태 확인
+        pool_recycle=300,        # 연결 재사용 시간 (5분)
+        pool_size=5,             # 연결 풀 크기
+        max_overflow=10,         # 최대 연결 수
+        echo=False               # SQL 로그 비활성화 (프로덕션)
     )
 
 # db session generator
@@ -36,6 +39,15 @@ SessionLocal = sessionmaker(autocommit = False, autoflush = False, bind = engine
 # basic class for table models
 Base = declarative_base()
 #Base: parent class for every table model
+
+# function to create all tables
+def create_tables():
+    """Create all database tables"""
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("✅ Database tables created successfully")
+    except Exception as e:
+        print(f"❌ Error creating tables: {e}")
 
 # function to get db connection
 def get_db(): # function that is called whenever the API uses db
