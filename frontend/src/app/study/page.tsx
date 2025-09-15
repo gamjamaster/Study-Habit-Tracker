@@ -228,8 +228,12 @@ function StudyContent() {
 
 
 
-  if (loading) return <div className="p-8 text-center text-gray-400">Loading...</div>;
-
+  if (loading) return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <span className="ml-3 text-gray-600">Loading...</span>
+      </div>
+    );
   return (
     <div className="py-8">
       <div className="max-w-4xl mx-auto p-4">

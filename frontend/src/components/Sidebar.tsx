@@ -3,6 +3,7 @@
 import Link from "next/link"; // link component for page redirection
 import { usePathname } from "next/navigation"; // hook to know the current path
 import { useState } from "react"; // React state hook
+import { useRouter } from "next/navigation"; // Add router import
 import { useAuth } from "@/contexts/AuthContext"; // import auth context
 // bring necessary icons from heroicons lib
 import {
@@ -27,13 +28,14 @@ const navItems = [
   { name: "Subjects", href: "/subjects", icon: AcademicCapIcon },
   { name: "Habits", href: "/habit", icon: CheckCircleIcon },
   { name: "Calendar", href: "/calendar", icon: CalendarIcon },
-  { name: "Personal Data", href: "/personal-data", icon: ChartBarIcon },
+  { name: "Personal Data", href: "/personal-data", icon: UserIcon },
 ];
 
 // make a responsive sidebar component
 export default function Sidebar() {
   const { user, signOut } = useAuth();
   const pathname = usePathname(); // store the directory of the current page in the pathname variable
+  const router = useRouter(); // Add router hook
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // mobile menu state
 
   return (
@@ -113,8 +115,19 @@ export default function Sidebar() {
               {/* Sign Out Button */}
               <button
                 onClick={async () => {
-                  await signOut();
-                  window.location.href = '/auth/login';
+                  try {
+                    const { error } = await signOut();
+                    if (error) {
+                      console.error('Sign out error:', error);
+                      alert('Failed to sign out. Please try again.');
+                      return;
+                    }
+                    // Use Next.js router instead of window.location
+                    router.push('/auth/login');
+                  } catch (error) {
+                    console.error('Unexpected sign out error:', error);
+                    alert('An unexpected error occurred during sign out.');
+                  }
                 }}
                 className="flex items-center gap-3 px-4 py-3 rounded-lg transition hover:bg-gray-800 text-gray-200 w-full text-left"
               >

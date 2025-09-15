@@ -149,7 +149,12 @@ function SubjectsContent() {
     };
 
     // conditional rendering: show loading message if data is still being fetched
-    if (loading) return <div className="p-8 text-center text-gray-400">Loading...</div>;
+    if (loading) return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <span className="ml-3 text-gray-600">Loading...</span>
+      </div>
+    );
 
     // main JSX return statement for rendering the page
     return (
