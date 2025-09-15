@@ -64,11 +64,10 @@ function HabitContent() {
       // Check if there's a log for today (compare date part only, regardless of timezone)
       const hasToday = logs.some((log) => {
         const logDate = new Date(log.completed_date);
-        // Convert UTC date to local date for comparison
-        const logLocalDate = new Date(logDate.getTime() - (logDate.getTimezoneOffset() * 60000));
-        const logDateStr = `${logLocalDate.getFullYear()}-${String(logLocalDate.getMonth() + 1).padStart(2, '0')}-${String(logLocalDate.getDate()).padStart(2, '0')}`;
+        // Use toLocaleDateString() to properly convert UTC to local date
+        const logDateStr = logDate.toLocaleDateString('en-CA'); // Format: YYYY-MM-DD
         const isToday = logDateStr === todayStr;
-        console.log(`Comparing log date: ${logDateStr} (UTC to local) with today: ${todayStr} = ${isToday}`);
+        console.log(`Comparing log date: ${logDateStr} (UTC converted to local) with today: ${todayStr} = ${isToday}`);
         return isToday;
       });
       
