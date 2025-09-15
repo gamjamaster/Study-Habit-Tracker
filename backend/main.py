@@ -25,28 +25,20 @@ app = FastAPI(
     version = "1.0.0"
 ) 
 
+app.add_middleware(
+    CORSMiddleware, # CORS => web browser security protocol
+    allow_origins = ["*"], # allow access to the api at these URLs.
+    allow_credentials = True, # allows request for credentials (cookies, authorization header and ...)
+    allow_methods = ["*"], # allows every http methods (GET, POST, PUT, DELETE)
+    allow_headers = ["*"], # allows every header
+)
+
 from dashboard import router as dashboard_router
 app.include_router(dashboard_router)
 
 app.include_router(habit_router)
 
 app.include_router(study_router)
-
-app.add_middleware(
-    CORSMiddleware, # CORS => web browser security protocol
-    allow_origins = [
-        "http://localhost:3000", 
-        "http://localhost:3001", 
-        "http://127.0.0.1:3000", 
-        "http://127.0.0.1:3001", 
-        "http://localhost:3002",
-        "https://*.vercel.app",  # Vercel 도메인 허용
-        "https://study-habit-tracker-*.vercel.app"  # 프로젝트별 Vercel 도메인
-    ], # allow access to the api at these URLs.
-    allow_credentials = True, # allows request for credentials (cookies, authorization header and ...)
-    allow_methods = ["*"], # allows every http methods (GET, POST, PUT, DELETE)
-    allow_headers = ["*"], # allows every header
-)
 
 # creates the table when the server starts
 @app.on_event("startup")

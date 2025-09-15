@@ -50,8 +50,9 @@ export default function ActivityHeatmap({
     const fetchHeatmapData = async () => {
       try {
         setLoading(true);
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
         const response = await fetch(
-          `http://localhost:8000/api/activity-heatmap?year=${year}&activity_type=${activityType}`
+          `${API_BASE_URL}/api/activity-heatmap?year=${year}&activity_type=${activityType}`
         );
         
         if (!response.ok) {
