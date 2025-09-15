@@ -2,7 +2,7 @@
 
 import { ChartBarIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import WeeklyChart from "@/components/WeeklyChart";
-import { useEffect, useState } from "react"; // React's current state and effect hook
+import { useEffect, useState, useCallback } from "react"; // React's current state and effect hook
 import { API_ENDPOINTS } from "@/lib/api";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,9 +22,10 @@ function DashboardContent(){
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0); // Add refresh key
 
-  useEffect(() => {
-    // request for data only when an user is logged in
+  // Function to load dashboard data
+  const loadDashboardData = useCallback(async () => {
     if(!user || !session) {
       console.log('Dashboard: No user or session', { user: !!user, session: !!session });
       return;
@@ -35,22 +36,26 @@ function DashboardContent(){
       hasToken: !!session.access_token 
     });
 
-    // request for API with JWT token included in the header
-    fetch(API_ENDPOINTS.DASHBOARD_SUMMARY, {
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`, // Supabase session token
-        'Content-Type': 'application/json'
+    setLoading(true);
+    setError(null);
+
+    try {
+      // request for API with JWT token included in the header
+      const response = await fetch(API_ENDPOINTS.DASHBOARD_SUMMARY, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`, // Supabase session token
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Dashboard API response status:', response.status);
+      if(!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
       }
-    })
-    .then(res => {
-      console.log('Dashboard API response status:', res.status);
-      if(!res.ok) {
-        throw new Error(`API Error: ${res.status} ${res.statusText}`);
-      }
-      return res.json();
-    })
-    .then(data => {
+
+      const data = await response.json();
       console.log('Dashboard API data:', data);
+
       setSummary({
         study_today: data.study_today,
         study_goal: data.study_goal,
@@ -59,14 +64,23 @@ function DashboardContent(){
         habit_total: data.habit_total,
         habit_percent: data.habit_total > 0 ? Math.round((data.habit_done / data.habit_total) * 100) : 0
       });
-      setLoading(false);
-    })
-    .catch((error) => {
+    } catch (error) {
       console.error('Dashboard API error:', error);
-      setError(`Cannot load the dashboard data: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setError(`Cannot load the dashboard data: ${errorMessage}`);
+    } finally {
       setLoading(false);
-    });
-  }, [user, session]); // reload whenever the user or session changes
+    }
+  }, [user, session]);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData, refreshKey]); // Add loadDashboardData to dependencies
+
+  // Function to manually refresh dashboard
+  const handleRefresh = () => {
+    setRefreshKey(prev => prev + 1);
+  };
 
   if(loading) return <div className = "p-8 text-center text-gray-400">Loading...</div>;
   if(error) return <div className = "p-8 text-center text-red-400">{error}</div>;
@@ -75,9 +89,19 @@ function DashboardContent(){
   return (
     <div className="py-4 lg:py-8">
       <div className="max-w-4xl mx-auto p-2 sm:p-4">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-gray-900 text-center">
-          📊 {user?.email}&apos;s Dashboard
-        </h1>
+        <div className="flex items-center justify-center gap-4 mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            📊 {user?.email}&apos;s Dashboard
+          </h1>
+          <button
+            onClick={handleRefresh}
+            disabled={loading}
+            className="px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+            title="Refresh dashboard data"
+          >
+            🔄 {loading ? 'Loading...' : 'Refresh'}
+          </button>
+        </div>
 
         {/* 오늘의 통계 카드들 */}
         <div className="grid gap-4 sm:gap-6 md:grid-cols-2 mb-6 sm:mb-8">

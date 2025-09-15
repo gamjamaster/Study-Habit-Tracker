@@ -239,10 +239,11 @@ function HabitContent() {
       // Filter today's logs for deletion (use same logic as checkTodayCompletion)
       const todayLogs = logs.filter((log) => {
         const logDate = new Date(log.completed_date);
-        // Convert UTC date to local date for comparison
-        const logLocalDate = new Date(logDate.getTime() - (logDate.getTimezoneOffset() * 60000));
-        const logDateStr = `${logLocalDate.getFullYear()}-${String(logLocalDate.getMonth() + 1).padStart(2, '0')}-${String(logLocalDate.getDate()).padStart(2, '0')}`;
-        return logDateStr === todayStr;
+        // Use toLocaleDateString() to properly convert UTC to local date (same as checkTodayCompletion)
+        const logDateStr = logDate.toLocaleDateString('en-CA'); // Format: YYYY-MM-DD
+        const isToday = logDateStr === todayStr;
+        console.log(`Comparing log date for deletion: ${logDateStr} with today: ${todayStr} = ${isToday}`);
+        return isToday;
       });
       
       console.log(`🗑️ Found ${todayLogs.length} logs to delete for habit ${habitId}`);
