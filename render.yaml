@@ -7,10 +7,10 @@ services:
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: SUPABASE_URL
-        value: https://vaeevhndniqddgiaxcrp.supabase.co
+        value: YOUR_SUPABASE_URL
       - key: SUPABASE_JWT_SECRET
-        value: VdZMaB6SQCCe1Q9lQRCQ6LJpFLNrGVVKQOzMRmF7lzs
+        value: YOUR_SUPABASE_JWT_SECRET
       - key: DATABASE_URL
-        value: postgresql://postgres:[YOUR_PASSWORD]@db.vaeevhndniqddgiaxcrp.supabase.co:5432/postgres
+        value: YOUR_DATABASE_URL
       - key: PYTHON_VERSION
         value: 3.11.0
