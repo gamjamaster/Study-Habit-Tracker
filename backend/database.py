@@ -1,18 +1,29 @@
+import os
 from sqlalchemy import create_engine # core tool that connects with the database
 from sqlalchemy.ext.declarative import declarative_base # basic class to make table model
 from sqlalchemy.orm import sessionmaker # tool to make a session to converse with the database
 
-# SQLite database file directory
-DATABASE_URL = "sqlite:///./study_habit.db"
-# DATABASE_URL: location of the databse
-# sqlite://: SQLite database is being used
-# ./study_habit.db: save the database as study_habit.db in the current folder
+# Database URL - supports both SQLite (local) and PostgreSQL (production)
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./study_habit.db")
+
+# PostgreSQL URL이면 psycopg2 연결 방식으로 변경
+if DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
 
 # creating db engine
-engine = create_engine( # engine: core tool to connect with the db
-    DATABASE_URL, # make engine with the directory
-    connect_args = {"check_same_thread": False} # SQLite config that helps to process multiple requests safely
-)
+if DATABASE_URL.startswith("sqlite"):
+    # SQLite configuration
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={"check_same_thread": False} # SQLite config for multiple requests
+    )
+else:
+    # PostgreSQL configuration
+    engine = create_engine(
+        DATABASE_URL,
+        pool_pre_ping=True,  # 연결 상태 확인
+        pool_recycle=300     # 연결 재사용 시간
+    )
 
 # db session generator
 SessionLocal = sessionmaker(autocommit = False, autoflush = False, bind = engine)
