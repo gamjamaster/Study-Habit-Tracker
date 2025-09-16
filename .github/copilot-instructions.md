@@ -1,6 +1,6 @@
 # 📚 Study & Lifestyle Habit Tracker – Integrated Development Guide
 
-## Number 1 Rule
+## Number 1 Rule - VERY IMPORTANT
 - Do not modify the code yourself. Just show the code to me so that I can learn the codes by entering them in the codebases.
 
 ## 🎯 Project Overview

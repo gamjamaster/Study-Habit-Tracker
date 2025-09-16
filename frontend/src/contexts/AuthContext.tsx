@@ -13,6 +13,8 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: AuthError | null }>
   signOut: () => Promise<{ error: AuthError | null }>
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>
+  updateProfile: (updates: { full_name?: string }) => Promise<{ error: AuthError | null }>;
+  updateEmail: (email: string) => Promise<{ error: AuthError | null }>;
 }
 
 // Create Auth Context
@@ -136,6 +138,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signOut,
     resetPassword,
+    updateProfile,
+    updateEmail,
   }
 
   return (
@@ -176,3 +180,25 @@ export function withAuth<P extends object>(Component: React.ComponentType<P>) {
     return <Component {...props} />
   }
 }
+
+const updateProfile = async (updates: { full_name?: string }) => {
+  try {
+    const { error } = await supabase.auth.updateUser({
+      data: updates
+    });
+    return { error };
+  } catch (error) {
+    return { error: error as AuthError };
+  }
+};
+
+const updateEmail = async (email: string) => {
+  try {
+    const { error } = await supabase.auth.updateUser({
+      email: email
+    });
+    return { error };
+  } catch (error) {
+    return { error: error as AuthError };
+  }
+};

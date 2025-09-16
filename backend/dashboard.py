@@ -21,10 +21,8 @@ def dashboard_summary(
         # Get today's study time for the current user
         study_today = db.query(func.sum(models.StudySession.duration_minutes))\
             .filter(models.StudySession.user_id == user_id)\
-            .filter(func.date_trunc('day', models.StudySession.created_at) == today)\
+            .filter(func.strftime('%Y-%m-%d', models.StudySession.created_at) == today.strftime('%Y-%m-%d'))\
             .scalar() or 0
-
-        study_goal = 180
 
         # Count habit completions for today (user's habits only)
         # Use both UTC date and local date to handle timezone issues
@@ -32,7 +30,7 @@ def dashboard_summary(
             .join(models.Habit, models.HabitLog.habit_id == models.Habit.id)\
             .filter(models.Habit.user_id == user_id)\
             .filter(
-                (func.date_trunc('day', models.HabitLog.completed_date) == today)
+                (func.strftime('%Y-%m-%d', models.HabitLog.completed_date) == today.strftime('%Y-%m-%d'))
             )\
             .scalar() or 0
 
@@ -48,7 +46,6 @@ def dashboard_summary(
         
         return {
             "study_today": study_today,
-            "study_goal": study_goal,
             "habit_done": habit_done,
             "habit_total": habit_total
         }
@@ -73,7 +70,7 @@ def dashboard_weekly(
 
             # load the total study time for that day for current user only
             study_time = db.query(func.sum(models.StudySession.duration_minutes))\
-                .filter(func.date_trunc('day', models.StudySession.created_at) == target_date)\
+                .filter(func.strftime('%Y-%m-%d', models.StudySession.created_at) == target_date.strftime('%Y-%m-%d'))\
                 .filter(models.StudySession.user_id == user_id)\
                 .scalar() or 0
             
@@ -82,7 +79,7 @@ def dashboard_weekly(
             habit_count = db.query(func.count(models.HabitLog.id))\
                 .join(models.Habit, models.HabitLog.habit_id == models.Habit.id)\
                 .filter(
-                    (func.date_trunc('day', models.HabitLog.completed_date) == target_date)
+                    (func.strftime('%Y-%m-%d', models.HabitLog.completed_date) == target_date.strftime('%Y-%m-%d'))
                 )\
                 .filter(models.Habit.user_id == user_id)\
                 .scalar() or 0
