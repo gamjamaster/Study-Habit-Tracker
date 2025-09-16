@@ -18,19 +18,6 @@ interface AuthContextType {
   updateEmail: (email: string) => Promise<{ error: AuthError | null }>
 }
 
-// Auth context type definitions
-interface AuthContextType {
-  user: User | null
-  session: Session | null
-  loading: boolean
-  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>
-  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: AuthError | null }>
-  signOut: () => Promise<{ error: AuthError | null }>
-  resetPassword: (email: string) => Promise<{ error: AuthError | null }>
-  updateProfile: (updates: { full_name?: string }) => Promise<{ error: AuthError | null }>;
-  updateEmail: (email: string) => Promise<{ error: AuthError | null }>;
-}
-
 // Create Auth Context
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
@@ -54,7 +41,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email)
         setSession(session)
         setUser(session?.user ?? null)
         setLoading(false)
@@ -117,35 +103,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Sign out
   const signOut = async () => {
     try {
-      // Debug info for deployment troubleshooting
+      // Clear local state first to prevent UI issues
+      setSession(null)
+      setUser(null)
+
+      // Clear Supabase session from localStorage
       if (typeof window !== 'undefined') {
-        console.log('🔐 Sign out attempt:', {
-          hasUser: !!user,
-          hasSession: !!session,
-          currentUrl: window.location.href,
-          isProduction: process.env.NODE_ENV === 'production'
-        });
+        try {
+          // Clear all Supabase auth-related keys from localStorage
+          const keys = Object.keys(window.localStorage)
+          keys.forEach(key => {
+            if (key.startsWith('supabase.auth.')) {
+              window.localStorage.removeItem(key)
+            }
+          })
+        } catch (error) {
+          console.error('Error clearing localStorage:', error)
+        }
       }
 
-      // Clear local state first to prevent UI issues
-      setSession(null);
-      setUser(null);
-
-      const { error } = await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut()
 
       if (error) {
-        console.error('❌ Sign out error:', error);
-        // Even if Supabase sign out fails, local state is already cleared
+        console.error('Sign out error:', error)
+        // Even if Supabase sign out fails, local state and storage are already cleared
         // This ensures the user is logged out from the app perspective
-      } else {
-        console.log('✅ Successfully signed out from Supabase');
       }
 
-      return { error };
+      return { error }
     } catch (error) {
-      console.error('💥 Unexpected error during sign out:', error);
-      // Local state is already cleared above, so user is effectively logged out
-      return { error: error as AuthError };
+      console.error('Unexpected error during sign out:', error)
+      // Local state and storage are already cleared above, so user is effectively logged out
+      return { error: error as AuthError }
     }
   }
 

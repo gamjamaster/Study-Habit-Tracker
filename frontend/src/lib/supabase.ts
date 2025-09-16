@@ -27,35 +27,16 @@ const getCurrentOrigin = () => {
   }
   return process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 }
-
-// Create Supabase client instance
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    flowType: 'pkce'
+    flowType: 'pkce',
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    storageKey: 'supabase.auth.token'
   }
 })
-
-// Debug info for deployment troubleshooting
-if (typeof window !== 'undefined') {
-  console.log('🔧 Supabase Config:', {
-    url: supabaseUrl,
-    hasAnonKey: !!supabaseAnonKey,
-    currentOrigin: window.location.origin,
-    isProduction: process.env.NODE_ENV === 'production',
-    userAgent: navigator.userAgent.substring(0, 50) + '...'
-  });
-
-  // Check if we're in a deployment environment
-  const isDeployed = !window.location.hostname.includes('localhost') &&
-                     !window.location.hostname.includes('127.0.0.1');
-
-  if (isDeployed) {
-    console.log('🌐 Deployed environment detected');
-  }
-}
 
 // Database types (will be updated based on your schema)
 export interface Database {
