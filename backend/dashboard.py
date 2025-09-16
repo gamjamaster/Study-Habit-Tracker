@@ -6,7 +6,6 @@ from auth import get_current_user
 import models
 from datetime import date
 from datetime import timedelta
-from main import get_date_format_func
 
 router = APIRouter()
 
@@ -18,12 +17,11 @@ def dashboard_summary(
     try:
         print("API called")
         today = date.today()
-        date_func = get_date_format_func()
 
         # Get today's study time for the current user
         study_today = db.query(func.sum(models.StudySession.duration_minutes))\
             .filter(models.StudySession.user_id == user_id)\
-            .filter(date_func(models.StudySession.created_at, '%Y-%m-%d') == today.strftime('%Y-%m-%d'))\
+            .filter(func.strftime('%Y-%m-%d', models.StudySession.created_at) == today.strftime('%Y-%m-%d'))\
             .scalar() or 0
 
         # Count habit completions for today (user's habits only)
@@ -32,7 +30,7 @@ def dashboard_summary(
             .join(models.Habit, models.HabitLog.habit_id == models.Habit.id)\
             .filter(models.Habit.user_id == user_id)\
             .filter(
-                (date_func(models.HabitLog.completed_date, '%Y-%m-%d') == today.strftime('%Y-%m-%d'))
+                (func.strftime('%Y-%m-%d', models.HabitLog.completed_date) == today.strftime('%Y-%m-%d'))
             )\
             .scalar() or 0
 
@@ -63,7 +61,6 @@ def dashboard_weekly(
     try:
         print("Weekly API called") # API call log
         today = date.today() # loading today's date
-        date_func = get_date_format_func()
 
         weekly_data = [] # list for saving weekly data
         day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] # list for days
@@ -73,7 +70,7 @@ def dashboard_weekly(
 
             # load the total study time for that day for current user only
             study_time = db.query(func.sum(models.StudySession.duration_minutes))\
-                .filter(date_func(models.StudySession.created_at, '%Y-%m-%d') == target_date.strftime('%Y-%m-%d'))\
+                .filter(func.strftime('%Y-%m-%d', models.StudySession.created_at) == target_date.strftime('%Y-%m-%d'))\
                 .filter(models.StudySession.user_id == user_id)\
                 .scalar() or 0
             
@@ -82,7 +79,7 @@ def dashboard_weekly(
             habit_count = db.query(func.count(models.HabitLog.id))\
                 .join(models.Habit, models.HabitLog.habit_id == models.Habit.id)\
                 .filter(
-                    (date_func(models.HabitLog.completed_date, '%Y-%m-%d') == target_date.strftime('%Y-%m-%d'))
+                    (func.strftime('%Y-%m-%d', models.HabitLog.completed_date) == target_date.strftime('%Y-%m-%d'))
                 )\
                 .filter(models.Habit.user_id == user_id)\
                 .scalar() or 0
