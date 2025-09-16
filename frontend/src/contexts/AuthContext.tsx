@@ -117,26 +117,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Sign out
   const signOut = async () => {
     try {
+      // Debug info for deployment troubleshooting
+      if (typeof window !== 'undefined') {
+        console.log('🔐 Sign out attempt:', {
+          hasUser: !!user,
+          hasSession: !!session,
+          currentUrl: window.location.href,
+          isProduction: process.env.NODE_ENV === 'production'
+        });
+      }
+
+      // Clear local state first to prevent UI issues
+      setSession(null);
+      setUser(null);
+
       const { error } = await supabase.auth.signOut();
 
       if (error) {
-        // AuthSessionMissingError의 경우 로컬 정리만 수행
-        if (error.message === 'Auth session missing!') {
-          setSession(null);
-          setUser(null);
-          return { error: null };
-        }
+        console.error('❌ Sign out error:', error);
+        // Even if Supabase sign out fails, local state is already cleared
+        // This ensures the user is logged out from the app perspective
+      } else {
+        console.log('✅ Successfully signed out from Supabase');
       }
-
-      // 항상 로컬 상태 정리
-      setSession(null);
-      setUser(null);
 
       return { error };
     } catch (error) {
-      // 예외 발생 시에도 로컬 상태 정리
-      setSession(null);
-      setUser(null);
+      console.error('💥 Unexpected error during sign out:', error);
+      // Local state is already cleared above, so user is effectively logged out
       return { error: error as AuthError };
     }
   }

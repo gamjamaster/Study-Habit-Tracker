@@ -121,20 +121,30 @@ export default function Sidebar() {
               {/* Sign Out Button */}
               <button
                 onClick={async () => {
+                  console.log('🚪 Sign out button clicked');
+
                   try {
                     const { error } = await signOut();
 
                     if (error) {
                       // AuthSessionMissingError는 일반적인 경우이므로 사용자에게 경고하지 않음
                       if (error.message !== 'Auth session missing!') {
-                        alert('Reload the page.');
+                        alert('로그아웃 중 오류가 발생했습니다. 페이지를 새로고침 해주세요.');
                         return;
                       }
                     }
-                    // Use Next.js router instead of window.location
-                    router.push('/auth/login');
+
+                    console.log('✅ Sign out successful, redirecting...');
+
+                    // Force page reload to clear any cached state in production
+                    if (typeof window !== 'undefined' && window.location) {
+                      window.location.href = '/auth/login';
+                    } else {
+                      router.push('/auth/login');
+                    }
                   } catch {
-                    alert('An unexpected error occurred during sign out. Please reload the page.');
+                    console.error('💥 Exception in sign out handler');
+                    alert('로그아웃 중 예기치 않은 오류가 발생했습니다. 페이지를 새로고침 해주세요.');
                   }
                 }}
                 className="flex items-center gap-3 px-4 py-3 rounded-lg transition hover:bg-gray-800 text-gray-200 w-full text-left"

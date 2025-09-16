@@ -4,14 +4,58 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
+// Validate environment variables
+if (!supabaseUrl || !supabaseAnonKey) {
+  const errorMsg = `
+Missing Supabase environment variables:
+- NEXT_PUBLIC_SUPABASE_URL: ${supabaseUrl ? '✓' : '✗'}
+- NEXT_PUBLIC_SUPABASE_ANON_KEY: ${supabaseAnonKey ? '✓' : '✗'}
+
+Please check your deployment platform's environment variables.
+For Vercel: Project Settings > Environment Variables
+For Netlify: Site Settings > Environment Variables
+For other platforms: Check their documentation for environment variable setup.
+  `.trim();
+
+  throw new Error(errorMsg);
+}
+
+// Get current origin for dynamic redirect URLs
+const getCurrentOrigin = () => {
+  if (typeof window !== 'undefined') {
+    return window.location.origin
+  }
+  return process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+}
+
 // Create Supabase client instance
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    flowType: 'pkce'
   }
 })
+
+// Debug info for deployment troubleshooting
+if (typeof window !== 'undefined') {
+  console.log('🔧 Supabase Config:', {
+    url: supabaseUrl,
+    hasAnonKey: !!supabaseAnonKey,
+    currentOrigin: window.location.origin,
+    isProduction: process.env.NODE_ENV === 'production',
+    userAgent: navigator.userAgent.substring(0, 50) + '...'
+  });
+
+  // Check if we're in a deployment environment
+  const isDeployed = !window.location.hostname.includes('localhost') &&
+                     !window.location.hostname.includes('127.0.0.1');
+
+  if (isDeployed) {
+    console.log('🌐 Deployed environment detected');
+  }
+}
 
 // Database types (will be updated based on your schema)
 export interface Database {
