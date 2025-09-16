@@ -10,13 +10,29 @@ import calendar
 import schemas  # for goal schemas
 
 # import from database.py, main.py, schemas.py
-from database import get_db, create_tables
+from database import get_db, create_tables, engine
 from models import Subject, StudySession, Habit, HabitLog
 import schemas
 
 from habit import router as habit_router
 
 from study import router as study_router
+
+# Database type detection for date formatting functions
+def get_date_format_func():
+    """Get appropriate date formatting function based on database type"""
+    db_type = engine.url.drivername
+    if 'postgresql' in db_type:
+        def pg_date_format(column, format_str):
+            # Convert SQLite strftime format to PostgreSQL to_char format
+            pg_format = format_str.replace('%Y', 'YYYY').replace('%m', 'MM').replace('%d', 'DD')
+            if '%w' in format_str:
+                # PostgreSQL uses 'ID' for day of week (0=Sunday, 6=Saturday)
+                pg_format = pg_format.replace('%w', 'ID')
+            return func.to_char(column, pg_format)
+        return pg_date_format
+    else:  # SQLite and others
+        return func.strftime
 
 #main object of the web api server
 app = FastAPI(
@@ -330,33 +346,35 @@ def get_study_statistics(
         if period == "week":
             # data for the past 7 days
             start_date = now - timedelta(days = 7)
+            date_func = get_date_format_func()
 
             # daily study time for current user only
             daily_stats = db.query(
-                func.strftime('%Y-%m-%d', StudySession.created_at).label('date'),
+                date_func(StudySession.created_at, '%Y-%m-%d').label('date'),
                 func.sum(StudySession.duration_minutes).label('total_minutes'),
                 func.count(StudySession.id).label('session_count')
             ).filter(
                 StudySession.created_at >= start_date,
                 StudySession.user_id == user_id  # add user filtering
             ).group_by(
-                func.strftime('%Y-%m-%d', StudySession.created_at)
+                date_func(StudySession.created_at, '%Y-%m-%d')
             ).all()
         
         elif period == "month":
             # data for the past 30 days
             start_date = now - timedelta(days = 30)
+            date_func = get_date_format_func()
 
             # daily study time for current user only
             daily_stats = db.query(
-                func.strftime('%Y-%m-%d', StudySession.created_at).label('date'),
+                date_func(StudySession.created_at, '%Y-%m-%d').label('date'),
                 func.sum(StudySession.duration_minutes).label('total_minutes'),
                 func.count(StudySession.id).label('session_count')
             ).filter(
                 StudySession.created_at >= start_date,
                 StudySession.user_id == user_id  # add user filtering
             ).group_by(
-                func.strftime('%Y-%m-%d', StudySession.created_at)
+                date_func(StudySession.created_at, '%Y-%m-%d')
             ).all()
 
         # stats per subject for current user only
@@ -406,19 +424,20 @@ def get_dashboard_summary(
     """Returns current user's dashboard summary data"""
     try:
         from datetime import datetime, timedelta
-        
+
         today = datetime.now().date()
-        
+        date_func = get_date_format_func()
+
         # calculates today's study time of the day (PostgreSQL compatible)
         study_today = db.query(StudySession).filter(
             StudySession.user_id == user_id,
-            func.strftime('%Y-%m-%d', StudySession.created_at) == today.strftime('%Y-%m-%d')
+            date_func(StudySession.created_at, '%Y-%m-%d') == today.strftime('%Y-%m-%d')
         ).with_entities(func.sum(StudySession.duration_minutes)).scalar() or 0
-        
+
         # habit achieved today (PostgreSQL compatible)
         habits_done = db.query(HabitLog).filter(
             HabitLog.user_id == user_id,
-            func.strftime('%Y-%m-%d', HabitLog.completed_date) == today.strftime('%Y-%m-%d')
+            date_func(HabitLog.completed_date, '%Y-%m-%d') == today.strftime('%Y-%m-%d')
         ).count()
         
         # total number of habits
@@ -451,26 +470,27 @@ def get_habit_completion_stats(
 
         # daily habit completion data for current user only
         total_habits = db.query(func.count(Habit.id)).filter(Habit.user_id == user_id).scalar()
+        date_func = get_date_format_func()
 
         daily_completion = db.query(
-            func.strftime('%Y-%m-%d', HabitLog.completed_date).label('date'),
+            date_func(HabitLog.completed_date, '%Y-%m-%d').label('date'),
             func.count(func.distinct(HabitLog.habit_id)).label('completed_habits')
         ).join(Habit, HabitLog.habit_id == Habit.id).filter(
             Habit.user_id == user_id,  # filter by user_id
             HabitLog.completed_date >= start_date
         ).group_by(
-            func.strftime('%Y-%m-%d', HabitLog.completed_date)
+            date_func(HabitLog.completed_date, '%Y-%m-%d')
         ).all()
 
         # completion rate by day of the week for current user only
         weekday_completion = db.query(
-            func.strftime('%w', HabitLog.completed_date).label('weekday'),
+            date_func(HabitLog.completed_date, '%w').label('weekday'),
             func.count(HabitLog.id).label('completion_count')
         ).join(Habit, HabitLog.habit_id == Habit.id).filter(
             Habit.user_id == user_id,  # filter by user_id
             HabitLog.completed_date >= start_date
         ).group_by(
-            func.strftime('%w', HabitLog.completed_date)
+            date_func(HabitLog.completed_date, '%w')
         ).all()
 
         # completion rate by habit for current user only
@@ -522,26 +542,27 @@ def get_study_habit_correlation(
     try:
         # data for the past 30 days
         start_date = datetime.now() - timedelta(days = 30)
+        date_func = get_date_format_func()
 
         # Daily study time and number of habits completed
         correlation_data = db.query(
-            func.strftime('%Y-%m-%d', StudySession.created_at).label('date'),
+            date_func(StudySession.created_at, '%Y-%m-%d').label('date'),
             func.sum(StudySession.duration_minutes).label('study_minutes')
         ).filter(
             StudySession.user_id == user_id,  # filter by user_id
             StudySession.created_at >= start_date
         ).group_by(
-            func.strftime('%Y-%m-%d', StudySession.created_at)
+            date_func(StudySession.created_at, '%Y-%m-%d')
         ).subquery()
 
         habit_data = db.query(
-            func.strftime('%Y-%m-%d', HabitLog.completed_date).label('date'),
+            date_func(HabitLog.completed_date, '%Y-%m-%d').label('date'),
             func.count(HabitLog.id).label('habit_count')
         ).join(Habit, HabitLog.habit_id == Habit.id).filter(
             Habit.user_id == user_id,  # filter by user_id
             HabitLog.completed_date >= start_date
         ).group_by(
-            func.strftime('%Y-%m-%d', HabitLog.completed_date)
+            date_func(HabitLog.completed_date, '%Y-%m-%d')
         ).subquery()
 
         # combined data
@@ -685,18 +706,19 @@ def get_activity_heatmap(
     # Generate all dates for the year
     start_date = date(year, 1, 1)
     end_date = date(year, 12, 31)
+    date_func = get_date_format_func()
     
     # Get study sessions for the year (current user only)
     study_sessions = db.query(StudySession).filter(
-        func.strftime('%Y-%m-%d', StudySession.created_at) >= start_date.strftime('%Y-%m-%d'),
-        func.strftime('%Y-%m-%d', StudySession.created_at) <= end_date.strftime('%Y-%m-%d'),
+        date_func(StudySession.created_at, '%Y-%m-%d') >= start_date.strftime('%Y-%m-%d'),
+        date_func(StudySession.created_at, '%Y-%m-%d') <= end_date.strftime('%Y-%m-%d'),
         StudySession.user_id == user_id  # add user filtering
     ).all()
     
     # Get habit logs for the year (current user only)
     habit_logs = db.query(HabitLog).filter(
-        func.strftime('%Y-%m-%d', HabitLog.completed_date) >= start_date.strftime('%Y-%m-%d'),
-        func.strftime('%Y-%m-%d', HabitLog.completed_date) <= end_date.strftime('%Y-%m-%d'),
+        date_func(HabitLog.completed_date, '%Y-%m-%d') >= start_date.strftime('%Y-%m-%d'),
+        date_func(HabitLog.completed_date, '%Y-%m-%d') <= end_date.strftime('%Y-%m-%d'),
         HabitLog.user_id == user_id  # add user filtering
     ).all()
     

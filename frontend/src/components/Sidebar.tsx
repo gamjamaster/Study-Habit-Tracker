@@ -35,7 +35,7 @@ const navItems = [
 
 // make a responsive sidebar component
 export default function Sidebar() {
-  const { user, session, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const pathname = usePathname(); // store the directory of the current page in the pathname variable
   const router = useRouter(); // Add router hook
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // mobile menu state
@@ -121,25 +121,11 @@ export default function Sidebar() {
               {/* Sign Out Button */}
               <button
                 onClick={async () => {
-                  console.log('Sign out button clicked');
-                  console.log('Current user before sign out:', user);
-                  console.log('Current session before sign out:', session);
-                  
                   try {
-                    const { error } = await signOut();
-                    console.log('Sign out result:', { error });
-                    
-                    if (error) {
-                      console.error('Sign out error:', error);
-                      alert('Failed to sign out. Please try again.');
-                      return;
-                    }
-                    console.log('Sign out successful, redirecting to login...');
                     // Use Next.js router instead of window.location
                     router.push('/auth/login');
-                  } catch (error) {
-                    console.error('Unexpected sign out error:', error);
-                    alert('An unexpected error occurred during sign out.');
+                  } catch {
+                    alert('로그아웃 중 예기치 않은 오류가 발생했습니다. 페이지를 새로고침 해주세요.');
                   }
                 }}
                 className="flex items-center gap-3 px-4 py-3 rounded-lg transition hover:bg-gray-800 text-gray-200 w-full text-left"

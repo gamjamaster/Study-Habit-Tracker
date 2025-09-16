@@ -12,7 +12,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 export default function ProfilePage(){
-    const {user, updateProfile, updateEmail} = useAuth();
+    const {user, updateProfile, updateEmail, loading} = useAuth();
     const router = useRouter();
 
     // form state management
@@ -31,10 +31,10 @@ export default function ProfilePage(){
 
     // redirect users without authentication
     useEffect(() => {
-        if(!user){
+        if(!loading && !user){
             router.push("/auth/login");
         }
-    }, [user, router]);
+    }, [user, loading, router]);
 
     // function to update name
     const handleUpdateName = async (e: React.FormEvent) => {
@@ -51,6 +51,7 @@ export default function ProfilePage(){
                 setMessage({type: "success", text: "Name has been updated successfully."});
             }
         } catch(error){
+            console.error('Name update exception:', error);
             setMessage({type: "error", text: "An error has occured while updating your name."});
         } finally{
             setIsLoading(false);
@@ -72,14 +73,12 @@ export default function ProfilePage(){
                 setMessage({
                     type: "success", text: "A confirmation link has been sent to your new email."});
             }
-        } catch(error){
+        } catch{
             setMessage({type: "error", text: "An error has occured while updating your email."});
         } finally{
             setIsLoading(false);
         }
-    };
-
-    if(!user){
+    };    if(!user){
         return(
             <div className = "min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className = "animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>

@@ -1,8 +1,22 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { User, Session, AuthError } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
+
+// Auth context type definitions
+interface AuthContextType {
+  user: User | null
+  session: Session | null
+  loading: boolean
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>
+  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: AuthError | null }>
+  signOut: () => Promise<{ error: AuthError | null }>
+  resetPassword: (email: string) => Promise<{ error: AuthError | null }>
+  updateProfile: (updates: { full_name?: string }) => Promise<{ error: AuthError | null }>
+  updateEmail: (email: string) => Promise<{ error: AuthError | null }>
+}
 
 // Auth context type definitions
 interface AuthContextType {
@@ -102,23 +116,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Sign out
   const signOut = async () => {
-    console.log('Attempting to sign out...');
-    console.log('Supabase client available:', !!supabase);
-    console.log('Current session before sign out:', session);
-    
     try {
-      const { error } = await supabase.auth.signOut()
-      console.log('Supabase sign out response:', { error });
-      
+      const { error } = await supabase.auth.signOut();
+
       if (error) {
-        console.error('Supabase sign out error:', error);
-      } else {
-        console.log('Successfully signed out from Supabase');
+        // AuthSessionMissingError의 경우 로컬 정리만 수행
+        if (error.message === 'Auth session missing!') {
+          setSession(null);
+          setUser(null);
+          return { error: null };
+        }
       }
-      return { error }
+
+      // 항상 로컬 상태 정리
+      setSession(null);
+      setUser(null);
+
+      return { error };
     } catch (error) {
-      console.error('Unexpected error during sign out:', error);
-      return { error: error as AuthError }
+      // 예외 발생 시에도 로컬 상태 정리
+      setSession(null);
+      setUser(null);
+      return { error: error as AuthError };
     }
   }
 
@@ -129,6 +148,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
     return { error }
   }
+
+  // Update user profile
+  const updateProfile = async (updates: { full_name?: string }) => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: updates
+      });
+      return { error };
+    } catch (error) {
+      return { error: error as AuthError };
+    }
+  };
+
+  // Update user email
+  const updateEmail = async (email: string) => {
+    if (!user) {
+      return { error: { message: 'User not authenticated' } as AuthError };
+    }
+
+    if (email === user.email) {
+      return { error: { message: 'New email is the same as current email' } as AuthError };
+    }
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        email: email
+      });
+      return { error };
+    } catch (error) {
+      return { error: error as AuthError };
+    }
+  };
 
   const value: AuthContextType = {
     user,
@@ -162,6 +213,13 @@ export function useAuth() {
 export function withAuth<P extends object>(Component: React.ComponentType<P>) {
   return function AuthenticatedComponent(props: P) {
     const { user, loading } = useAuth()
+    const router = useRouter()
+
+    useEffect(() => {
+      if (!loading && !user) {
+        router.push('/auth/login')
+      }
+    }, [user, loading, router])
 
     if (loading) {
       return (
@@ -172,33 +230,9 @@ export function withAuth<P extends object>(Component: React.ComponentType<P>) {
     }
 
     if (!user) {
-      // Redirect to login page
-      window.location.href = '/auth/login'
       return null
     }
 
     return <Component {...props} />
   }
 }
-
-const updateProfile = async (updates: { full_name?: string }) => {
-  try {
-    const { error } = await supabase.auth.updateUser({
-      data: updates
-    });
-    return { error };
-  } catch (error) {
-    return { error: error as AuthError };
-  }
-};
-
-const updateEmail = async (email: string) => {
-  try {
-    const { error } = await supabase.auth.updateUser({
-      email: email
-    });
-    return { error };
-  } catch (error) {
-    return { error: error as AuthError };
-  }
-};
