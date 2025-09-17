@@ -98,3 +98,16 @@ class GroupMembership(Base):
     role = Column(String, default = "member") # "admin" or "member"
 
     group = relationship("StudyGroup", back_populates="memberships")
+
+class User(Base):
+    __tablename__ = "users"  # DB 테이블 이름
+
+    id = Column(String, primary_key=True, index=True)  # 사용자 ID (UUID 형식)
+    username = Column(String, unique=True, index=True)  # 사용자 이름 (리더보드 표시용)
+    email = Column(String, unique=True, index=True)  # 이메일 (선택적)
+    hashed_password = Column(String)  # 해시된 비밀번호
+    created_at = Column(DateTime, default=datetime.now)  # 생성 시간
+
+    # 관계 설정 (필요 시 추가)
+    study_sessions = relationship("StudySession", back_populates="user")
+    habits = relationship("Habit", back_populates="user")

@@ -11,7 +11,7 @@ import Link from "next/link";
 // Leaderboard entry interface
 interface LeaderboardEntry {
   user_id: string;
-  user_email: string;
+  username: string;
   total_study_minutes: number;
   study_sessions_count: number;
   habit_completion_rate: number;
@@ -283,7 +283,7 @@ function GroupDetailContent() {
 
                   <div>
                     <div className="font-semibold text-gray-900">
-                      {entry.user_email}
+                      {entry.username} 
                       {entry.user_id === user?.id && (
                         <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">You</span>
                       )}

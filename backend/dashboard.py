@@ -101,3 +101,35 @@ def dashboard_weekly(
     except Exception as e:
         print("Weekly API error:", e) # error log
         return {"error": str(e)} # return error
+    
+@router.get("/dashboard/leaderboard/{group_id}")  # 그룹 ID를 파라미터로 추가하여 그룹별 필터링
+def dashboard_leaderboard(
+    group_id: int,  # 그룹 ID 추가
+    db: Session = Depends(get_db)
+):
+    try:
+        print("Leaderboard API called")  # API 호출 로그
+        # 그룹 멤버십을 통해 그룹 사용자만 필터링하고, username 가져오기
+        leaderboard = db.query(
+            models.User.username,  # User 테이블에서 username 가져오기
+            func.sum(models.StudySession.duration_minutes).label("total_study_time")
+        )\
+        .join(models.GroupMembership, models.User.id == models.GroupMembership.user_id)\
+        .join(models.StudySession, models.User.id == models.StudySession.user_id)\
+        .filter(models.GroupMembership.group_id == group_id)\
+        .group_by(models.User.id)\
+        .order_by(func.sum(models.StudySession.duration_minutes).desc())\
+        .limit(10)\
+        .all()
+
+        # 결과를 딕셔너리 리스트로 변환 (username 표시)
+        result = [
+            {"username": item.username, "total_study_time": item.total_study_time}
+            for item in leaderboard
+        ]
+
+        print("Leaderboard API returning")  # 반환 로그
+        return {"leaderboard": result}
+    except Exception as e:
+        print("Leaderboard API error:", e)  # 오류 로그
+        return {"error": str(e)}
