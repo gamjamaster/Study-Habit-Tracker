@@ -16,20 +16,19 @@ class Subject(Base): # creates table "Subject"
     study_sessions = relationship("StudySession", back_populates = "subject")
 
 # study session table
-class StudySession(Base): # table to keep track of study sessions
-    __tablename__ = "study_sessions" # name of the table in the db
+class StudySession(Base):
+    __tablename__ = "study_sessions"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String, ForeignKey("users.id"), index=True)  # ForeignKey 추가
+    subject_id = Column(Integer, ForeignKey("subjects.id"))
+    start_time = Column(DateTime, nullable=True)
+    end_time = Column(DateTime, nullable=True)
+    duration_minutes = Column(Integer)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.now)
 
-    id = Column(Integer, primary_key = True, index = True) 
-    user_id = Column(String, index=True)
-    subject_id = Column(Integer, ForeignKey("subjects.id")) # keeps the subject that has been studied
-                                                           # connects with id of subject table
-    start_time = Column(DateTime, nullable=True) # study begun at
-    end_time = Column(DateTime, nullable=True) # study ended at
-    duration_minutes = Column(Integer) # total study time in minutes
-    notes = Column(Text, nullable = True) # notes on what has been studied, used text type as it may be long
-                                          # nullable = True: notes can be empty
-    created_at = Column(DateTime, default = datetime.now)
-    
+    # 관계 설정
+    user = relationship("User", back_populates="study_sessions")
     subject = relationship("Subject", back_populates="study_sessions")
 
 # habit table
@@ -100,14 +99,12 @@ class GroupMembership(Base):
     group = relationship("StudyGroup", back_populates="memberships")
 
 class User(Base):
-    __tablename__ = "users"  # DB 테이블 이름
+    __tablename__ = "users"
+    id = Column(String, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    email = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+    created_at = Column(DateTime, default=datetime.now)
 
-    id = Column(String, primary_key=True, index=True)  # 사용자 ID (UUID 형식)
-    username = Column(String, unique=True, index=True)  # 사용자 이름 (리더보드 표시용)
-    email = Column(String, unique=True, index=True)  # 이메일 (선택적)
-    hashed_password = Column(String)  # 해시된 비밀번호
-    created_at = Column(DateTime, default=datetime.now)  # 생성 시간
-
-    # 관계 설정 (필요 시 추가)
+    # 관계 설정
     study_sessions = relationship("StudySession", back_populates="user")
-    habits = relationship("Habit", back_populates="user")
