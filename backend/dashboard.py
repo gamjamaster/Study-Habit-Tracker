@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import func, text
+from sqlalchemy import func
 from database import get_db
 from auth import get_current_user
 import models
@@ -21,7 +21,7 @@ def dashboard_summary(
         # Get today's study time for the current user
         study_today = db.query(func.sum(models.StudySession.duration_minutes))\
             .filter(models.StudySession.user_id == user_id)\
-            .filter(func.date(text("created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific/Fiji'")) == today)\
+            .filter(func.strftime('%Y-%m-%d', models.StudySession.created_at) == today.strftime('%Y-%m-%d'))\
             .scalar() or 0
 
         # Count habit completions for today (user's habits only)
@@ -30,7 +30,7 @@ def dashboard_summary(
             .join(models.Habit, models.HabitLog.habit_id == models.Habit.id)\
             .filter(models.Habit.user_id == user_id)\
             .filter(
-                func.date(text("completed_date AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific/Fiji'")) == today
+                (func.strftime('%Y-%m-%d', models.HabitLog.completed_date) == today.strftime('%Y-%m-%d'))
             )\
             .scalar() or 0
 
@@ -70,7 +70,7 @@ def dashboard_weekly(
 
             # load the total study time for that day for current user only
             study_time = db.query(func.sum(models.StudySession.duration_minutes))\
-                .filter(func.date(text("created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific/Fiji'")) == target_date)\
+                .filter(func.strftime('%Y-%m-%d', models.StudySession.created_at) == target_date.strftime('%Y-%m-%d'))\
                 .filter(models.StudySession.user_id == user_id)\
                 .scalar() or 0
             
@@ -79,7 +79,7 @@ def dashboard_weekly(
             habit_count = db.query(func.count(models.HabitLog.id))\
                 .join(models.Habit, models.HabitLog.habit_id == models.Habit.id)\
                 .filter(
-                    func.date(text("completed_date AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific/Fiji'")) == target_date
+                    (func.strftime('%Y-%m-%d', models.HabitLog.completed_date) == target_date.strftime('%Y-%m-%d'))
                 )\
                 .filter(models.Habit.user_id == user_id)\
                 .scalar() or 0
