@@ -26,8 +26,7 @@ class StudySession(Base):
     duration_minutes = Column(Integer)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.now)
-
-    # 관계 설정
+    
     user = relationship("User", back_populates="study_sessions")
     subject = relationship("Subject", back_populates="study_sessions")
 
