@@ -127,6 +127,7 @@ def join_group(
     return {"message": "Successfully joined group", "group_name": group.name}
 
 # 5. Get group leaderboard
+
 @router.get("/groups/{group_id}/leaderboard", response_model=schemas.GroupLeaderboardResponse)
 def get_group_leaderboard(
     group_id: int,
@@ -162,7 +163,7 @@ def get_group_leaderboard(
 
     for member_id in member_ids:
         # Get user info from Profile table (full_name as username)
-        profile = db.query(Profile).filter(Profile.user_id == member_id).first()
+        profile = db.query(Profile).filter(Profile.id == member_id).first()
         username = profile.full_name if profile else "Unknown User"
 
         # Calculate study statistics for the week

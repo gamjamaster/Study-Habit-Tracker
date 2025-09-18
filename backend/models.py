@@ -100,7 +100,6 @@ class GroupMembership(Base):
 class Profile(Base):
     __tablename__ = "profiles"
     id = Column(String, primary_key=True, index=True)
-    user_id = Column(String, index=True) 
     email = Column(String, unique=True, index=True) 
     full_name = Column(String, nullable=True) 
     avatar_url = Column(String, nullable=True)
