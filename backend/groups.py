@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import func, and_, or_
 
 from database import get_db
-from models import StudyGroup, GroupMembership, StudySession, HabitLog, Habit, User
+from models import StudyGroup, GroupMembership, StudySession, HabitLog, Habit, Profile
 import schemas
 from auth import get_current_user
 
@@ -161,10 +161,9 @@ def get_group_leaderboard(
     leaderboard = []
 
     for member_id in member_ids:
-        # Get user info from User table (username or email)
-        user = db.query(User).filter(User.id == member_id).first()
-        user_email = user.email if user else member_id 
-        username = user.username if user else member_id 
+        # Get user info from Profile table (full_name as username)
+        profile = db.query(Profile).filter(Profile.user_id == member_id).first()
+        username = profile.full_name if profile else "Unknown User"
 
         # Calculate study statistics for the week
         study_sessions = db.query(StudySession).filter(
@@ -199,8 +198,8 @@ def get_group_leaderboard(
 
         leaderboard.append({
             "user_id": member_id,
-            "user_email": user_email,  # 실제 email 표시
-            "username": username,  # username 추가 (프론트엔드에서 사용 가능)
+            "user_email": member_id,
+            "username": username,
             "total_study_minutes": total_study_minutes,
             "study_sessions_count": study_sessions_count,
             "habit_completion_rate": habit_completion_rate,

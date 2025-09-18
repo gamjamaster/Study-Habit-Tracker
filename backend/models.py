@@ -19,7 +19,7 @@ class Subject(Base): # creates table "Subject"
 class StudySession(Base):
     __tablename__ = "study_sessions"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(String, ForeignKey("users.id"), index=True)  # ForeignKey 추가
+    user_id = Column(String, ForeignKey("profiles.id"), index=True) 
     subject_id = Column(Integer, ForeignKey("subjects.id"))
     start_time = Column(DateTime, nullable=True)
     end_time = Column(DateTime, nullable=True)
@@ -27,7 +27,7 @@ class StudySession(Base):
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.now)
     
-    user = relationship("User", back_populates="study_sessions")
+    user = relationship("Profile", back_populates="study_sessions") 
     subject = relationship("Subject", back_populates="study_sessions")
 
 # habit table
@@ -97,13 +97,13 @@ class GroupMembership(Base):
 
     group = relationship("StudyGroup", back_populates="memberships")
 
-class User(Base):
-    __tablename__ = "users"
+class Profile(Base):
+    __tablename__ = "profiles"
     id = Column(String, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
-    email = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
+    email = Column(String, unique=True, index=True) 
+    full_name = Column(String, nullable=True) 
+    avatar_url = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, nullable=True) 
 
-    # 관계 설정
     study_sessions = relationship("StudySession", back_populates="user")

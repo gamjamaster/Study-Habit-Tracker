@@ -174,7 +174,7 @@ class GroupMembership(BaseModel):
 # Leaderboard schemas
 class LeaderboardEntry(BaseModel):
     user_id: str
-    user_email: str
+    username: str
     total_study_minutes: int
     study_sessions_count: int
     habit_completion_rate: float
@@ -189,3 +189,19 @@ class GroupLeaderboardResponse(BaseModel):
     total_members: int
     week_start: str
     week_end: str
+    
+class ProfileBase(BaseModel):
+    email: str
+    full_name: Optional[str] = None
+    avatar_url: Optional[str] = None
+
+class ProfileCreate(ProfileBase):
+    pass
+
+class Profile(ProfileBase):
+    id: str
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
