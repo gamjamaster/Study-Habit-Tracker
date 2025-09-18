@@ -100,10 +100,11 @@ class GroupMembership(Base):
 class Profile(Base):
     __tablename__ = "profiles"
     id = Column(String, primary_key=True, index=True)
+    user_id = Column(String, index=True) 
     email = Column(String, unique=True, index=True) 
     full_name = Column(String, nullable=True) 
     avatar_url = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.now)
-    updated_at = Column(DateTime, nullable=True) 
+    updated_at = Column(DateTime, nullable=True)
 
     study_sessions = relationship("StudySession", back_populates="user")
