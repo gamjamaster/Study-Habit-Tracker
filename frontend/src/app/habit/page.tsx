@@ -59,7 +59,6 @@ function HabitContent() {
       if (!response.ok) return false;
       
       const logs: HabitLog[] = await response.json();
-      console.log(`Checking habit ${habitId} for ${todayStr}:`, logs); // Debug log
       
       // Check if there's a log for today (compare date part only, regardless of timezone)
       const hasToday = logs.some((log) => {
@@ -67,11 +66,9 @@ function HabitContent() {
         // Use toLocaleDateString() to properly convert UTC to local date
         const logDateStr = logDate.toLocaleDateString('en-CA'); // Format: YYYY-MM-DD
         const isToday = logDateStr === todayStr;
-        console.log(`Comparing log date: ${logDateStr} (UTC converted to local) with today: ${todayStr} = ${isToday}`);
         return isToday;
       });
       
-      console.log(`✅ Habit ${habitId} completed today: ${hasToday}`);
       return hasToday;
     } catch (error) {
       console.error(`❌ Error checking habit ${habitId} completion:`, error);
@@ -83,14 +80,12 @@ function HabitContent() {
   const loadHabits = useCallback(async () => {
     // check authentication before making API calls
     if (!user || !session) {
-      console.log('Habit: No user or session', { user: !!user, session: !!session });
       setLoading(false);
       return;
     }
 
     try {
       setLoading(true);
-      console.log("🔄 Loading habit data...");
       
       const response = await fetch(API_ENDPOINTS.HABITS, {
         headers: {
@@ -101,14 +96,11 @@ function HabitContent() {
       if (!response.ok) throw new Error("Cannot load habit data");
       
       const habitsData: Habit[] = await response.json();
-      console.log("✅ Habit data loaded:", habitsData.length, "items");
       
       // Check today's completion status for each habit
       const habitsWithStatus = await Promise.all(
         habitsData.map(async (habit) => {
-          console.log(`🔍 Checking completion for habit ${habit.id}: ${habit.name}`);
           const isDone = await checkTodayCompletion(habit.id);
-          console.log(`📊 Habit ${habit.id} completion status: ${isDone}`);
           return { ...habit, done: isDone };
         })
       );
@@ -126,14 +118,12 @@ function HabitContent() {
 
   // Load habits data when component mounts
   useEffect(() => {
-    console.log("🔄 Habit page mounted, loading habits...");
     loadHabits();
   }, [loadHabits]);
 
   // Also reload habits when session changes
   useEffect(() => {
     if (session) {
-      console.log("🔄 Session changed, reloading habits...");
       loadHabits();
     }
   }, [session, loadHabits]);
@@ -144,8 +134,6 @@ function HabitContent() {
   const toggleHabits = async (habitId: number) => {
     const habit = habits.find(h => h.id === habitId);
     if (!habit) return;
-
-    console.log(`🔄 Toggling habit ${habitId}: ${habit.name} (currently ${habit.done ? 'checked' : 'unchecked'})`);
 
     // Store the original state for rollback
     const originalDone = habit.done;
@@ -158,15 +146,11 @@ function HabitContent() {
 
       if (originalDone) {
         // Uncheck: delete today's log
-        console.log(`❌ Unchecking habit ${habitId} - deleting today's log`);
         await deleteTodayLog(habitId);
       } else {
         // Check: create today's log
-        console.log(`✅ Checking habit ${habitId} - creating today's log`);
         await createTodayLog(habitId);
       }
-      
-      console.log(`🔄 UI updated for habit ${habitId}`);
     } catch (error) {
       console.error("Habit toggle error:", error);
       
@@ -186,13 +170,9 @@ function HabitContent() {
       const now = new Date();
       const completedTime = now.toISOString();
       
-      console.log(`📝 Creating log for habit ${habitId} at ${completedTime}`);
-      
       const payload = {
         completed_date: completedTime
       };
-      
-      console.log(`📤 Sending payload:`, payload);
       
       const response = await fetch(API_ENDPOINTS.habitLogs(habitId), {
         method: "POST",
@@ -203,16 +183,13 @@ function HabitContent() {
         body: JSON.stringify(payload)
       });
       
-      console.log(`📥 Response status: ${response.status}`);
-      
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`❌ Log creation failed: ${errorText}`);
         throw new Error(`Log creation failed: ${errorText}`);
       }
       
-      const result = await response.json();
-      console.log(`✅ Log created successfully:`, result);
+      await response.json();
     } catch (error) {
       console.error("Log creation error:", error);
       throw error;
@@ -242,15 +219,11 @@ function HabitContent() {
         // Use toLocaleDateString() to properly convert UTC to local date (same as checkTodayCompletion)
         const logDateStr = logDate.toLocaleDateString('en-CA'); // Format: YYYY-MM-DD
         const isToday = logDateStr === todayStr;
-        console.log(`Comparing log date for deletion: ${logDateStr} with today: ${todayStr} = ${isToday}`);
         return isToday;
       });
       
-      console.log(`🗑️ Found ${todayLogs.length} logs to delete for habit ${habitId}`);
-      
       // Delete each today's log
       for (const log of todayLogs) {
-        console.log(`🗑️ Deleting log ${log.id} (${log.completed_date})`);
         const deleteResponse = await fetch(API_ENDPOINTS.habitLogById(log.id), {
           method: "DELETE",
           headers: {
@@ -261,8 +234,6 @@ function HabitContent() {
         
         if (!deleteResponse.ok) {
           console.error(`Failed to delete log ${log.id}`);
-        } else {
-          console.log(`✅ Successfully deleted log ${log.id}`);
         }
       }
     } catch (error) {
