@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from typing import List # list type
 from datetime import datetime, timedelta
 from sqlalchemy import func, extract
-from models import Subject, StudySession, Habit, HabitLog, Goal
+from models import Subject, StudySession, Habit, HabitLog, Goal, Profile
 from auth import get_current_user  # autshentication function
 import calendar
 import schemas  # for goal schemas
@@ -59,6 +59,89 @@ app.add_middleware(
 @app.options("/{path:path}")
 async def handle_options(path: str):
     return {"message": "OK"}
+
+# ======== Profile Management API ==========
+@app.post("/profiles/", response_model=schemas.Profile)
+def create_profile(
+    profile: schemas.ProfileCreate,
+    db: Session = Depends(get_db)
+):
+    """Create a new user profile with email uniqueness validation"""
+    # Check if email already exists
+    existing_profile = db.query(Profile).filter(Profile.email == profile.email).first()
+    if existing_profile:
+        raise HTTPException(
+            status_code=400,
+            detail="An account with this email already exists. Please use a different email address."
+        )
+
+    # Create new profile
+    db_profile = Profile(
+        id=profile.id if hasattr(profile, 'id') else None,  # Supabase might provide the ID
+        user_id=profile.id if hasattr(profile, 'id') else None,
+        email=profile.email,
+        full_name=profile.full_name,
+        avatar_url=profile.avatar_url
+    )
+
+    try:
+        db.add(db_profile)
+        db.commit()
+        db.refresh(db_profile)
+        return db_profile
+    except Exception as e:
+        db.rollback()
+        # Handle unique constraint violation
+        if "unique constraint" in str(e).lower() or "duplicate key" in str(e).lower():
+            raise HTTPException(
+                status_code=400,
+                detail="An account with this email already exists. Please use a different email address."
+            )
+        raise HTTPException(status_code=500, detail=f"Failed to create profile: {str(e)}")
+
+@app.get("/profiles/me", response_model=schemas.Profile)
+def get_my_profile(
+    user_id: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get current user's profile"""
+    profile = db.query(Profile).filter(Profile.user_id == user_id).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    return profile
+
+@app.put("/profiles/me", response_model=schemas.Profile)
+def update_my_profile(
+    profile_update: schemas.ProfileCreate,
+    user_id: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update current user's profile"""
+    profile = db.query(Profile).filter(Profile.user_id == user_id).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+
+    # Check email uniqueness if email is being changed
+    if profile_update.email != profile.email:
+        existing_profile = db.query(Profile).filter(
+            Profile.email == profile_update.email,
+            Profile.user_id != user_id  # Exclude current user
+        ).first()
+        if existing_profile:
+            raise HTTPException(
+                status_code=400,
+                detail="This email address is already in use by another account."
+            )
+
+    # Update profile fields
+    profile.email = profile_update.email
+    profile.full_name = profile_update.full_name
+    profile.avatar_url = profile_update.avatar_url
+    profile.updated_at = datetime.now()
+
+    db.commit()
+    db.refresh(profile)
+    return profile
 
 from dashboard import router as dashboard_router
 app.include_router(dashboard_router)
