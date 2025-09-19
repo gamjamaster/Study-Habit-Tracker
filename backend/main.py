@@ -43,9 +43,7 @@ app = FastAPI(
     version = "1.0.0"
 ) 
 
-# HTTPS 리다이렉트는 프로덕션에서만 적용 (개발 환경에서는 HTTP 허용)
-if os.getenv("ENVIRONMENT") == "production":
-    app.add_middleware(HTTPSRedirectMiddleware)
+app.add_middleware(HTTPSRedirectMiddleware)
 
 cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000").split(",")
 
@@ -53,38 +51,9 @@ app.add_middleware(
     CORSMiddleware, # CORS => web browser security protocol
     allow_origins = cors_origins, # 환경 변수에서 가져온 도메인 리스트 사용
     allow_credentials = True, # allows request for credentials (cookies, authorization header and ...)
-    allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"], # explicitly allow OPTIONS
+    allow_methods = ["*"], # allows every http methods (GET, POST, PUT, DELETE)
     allow_headers = ["*"], # allows every header
 )
-
-# Handle OPTIONS requests for CORS preflight without authentication
-@app.options("/dashboard/summary")
-async def handle_dashboard_options():
-    """Handle OPTIONS for dashboard/summary"""
-    print("OPTIONS request handled for /dashboard/summary")
-    return {"message": "OK"}
-
-@app.options("/study-sessions")
-async def handle_study_sessions_options():
-    """Handle OPTIONS for study-sessions"""
-    return {"message": "OK"}
-
-@app.options("/subjects")
-async def handle_subjects_options():
-    """Handle OPTIONS for subjects"""
-    return {"message": "OK"}
-
-@app.options("/habits")
-async def handle_habits_options():
-    """Handle OPTIONS for habits"""
-    return {"message": "OK"}
-
-# Catch-all OPTIONS handler
-@app.options("/{full_path:path}")
-async def handle_options(full_path: str):
-    """Handle CORS preflight OPTIONS requests without authentication"""
-    print(f"OPTIONS request handled for path: {full_path}")
-    return {"message": "OK"}
 
 from dashboard import router as dashboard_router
 app.include_router(dashboard_router)

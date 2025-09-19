@@ -9,6 +9,11 @@ import schemas # import schemas
 
 router = APIRouter()
 
+@router.options("/habits")
+async def habits_options():
+    """Handle OPTIONS requests for habits"""
+    return {"message": "OK"}
+
 # 1. get every habit
 @router.get("/habits", response_model=List[schemas.Habit]) # use the GET method for habit API
 def read_habits(
