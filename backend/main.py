@@ -58,9 +58,32 @@ app.add_middleware(
 )
 
 # Handle OPTIONS requests for CORS preflight without authentication
-@app.options("/{path:path}")
-async def handle_options(path: str):
+@app.options("/dashboard/summary")
+async def handle_dashboard_options():
+    """Handle OPTIONS for dashboard/summary"""
+    print("OPTIONS request handled for /dashboard/summary")
+    return {"message": "OK"}
+
+@app.options("/study-sessions")
+async def handle_study_sessions_options():
+    """Handle OPTIONS for study-sessions"""
+    return {"message": "OK"}
+
+@app.options("/subjects")
+async def handle_subjects_options():
+    """Handle OPTIONS for subjects"""
+    return {"message": "OK"}
+
+@app.options("/habits")
+async def handle_habits_options():
+    """Handle OPTIONS for habits"""
+    return {"message": "OK"}
+
+# Catch-all OPTIONS handler
+@app.options("/{full_path:path}")
+async def handle_options(full_path: str):
     """Handle CORS preflight OPTIONS requests without authentication"""
+    print(f"OPTIONS request handled for path: {full_path}")
     return {"message": "OK"}
 
 from dashboard import router as dashboard_router
