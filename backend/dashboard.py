@@ -24,8 +24,8 @@ def dashboard_summary(
             .filter(func.date(models.StudySession.created_at) == today)\
             .scalar() or 0 
 
-        # Count habit completions for today (user's habits only)
-        habit_done = db.query(func.count(models.HabitLog.id))\
+        # Count unique habit completions for today (user's habits only)
+        habit_done = db.query(func.count(func.distinct(models.HabitLog.habit_id)))\
             .join(models.Habit, models.HabitLog.habit_id == models.Habit.id)\
             .filter(models.Habit.user_id == user_id)\
             .filter(func.date(models.HabitLog.completed_date) == today)\
@@ -42,7 +42,24 @@ def dashboard_summary(
         print(f"  Habit done: {habit_done}")
         print(f"  Habit total: {habit_total}")
         
-        # Debug: Check total study sessions for this user
+        # Debug: Check habit completion details
+        todays_habit_logs = db.query(models.HabitLog)\
+            .join(models.Habit, models.HabitLog.habit_id == models.Habit.id)\
+            .filter(models.Habit.user_id == user_id)\
+            .filter(func.date(models.HabitLog.completed_date) == today)\
+            .all()
+        print(f"  Today's habit log entries: {len(todays_habit_logs)}")
+        for log in todays_habit_logs:
+            habit_name = db.query(models.Habit).filter(models.Habit.id == log.habit_id).first()
+            print(f"    Habit: {habit_name.name if habit_name else 'Unknown'} at {log.completed_date}")
+        
+        # Debug: Check all habits for this user
+        all_habits = db.query(models.Habit)\
+            .filter(models.Habit.user_id == user_id)\
+            .all()
+        print(f"  Total habits for user: {len(all_habits)}")
+        for habit in all_habits:
+            print(f"    Habit: {habit.name} (ID: {habit.id})")
         total_sessions = db.query(func.count(models.StudySession.id))\
             .filter(models.StudySession.user_id == user_id)\
             .scalar() or 0
