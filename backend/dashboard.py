@@ -18,20 +18,17 @@ def dashboard_summary(
         print("API called")
         today = date.today()
 
-        # Get today's study time for the current user
+        # Get today's study time for the current user (simplified timezone handling)
         study_today = db.query(func.sum(models.StudySession.duration_minutes))\
             .filter(models.StudySession.user_id == user_id)\
-            .filter(func.date(text("created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific/Fiji'")) == today)\
+            .filter(func.date(models.StudySession.created_at) == today)\
             .scalar() or 0 
 
         # Count habit completions for today (user's habits only)
-        # Use both UTC date and local date to handle timezone issues
         habit_done = db.query(func.count(models.HabitLog.id))\
             .join(models.Habit, models.HabitLog.habit_id == models.Habit.id)\
             .filter(models.Habit.user_id == user_id)\
-            .filter(
-                func.date(text("completed_date AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific/Fiji'")) == today
-            )\
+            .filter(func.date(models.HabitLog.completed_date) == today)\
             .scalar() or 0
 
         # Count total habits for the current user
@@ -40,9 +37,25 @@ def dashboard_summary(
             .scalar() or 0
 
         print(f"Dashboard summary for user {user_id}:")
+        print(f"  Today: {today}")
         print(f"  Study today: {study_today} minutes")
         print(f"  Habit done: {habit_done}")
         print(f"  Habit total: {habit_total}")
+        
+        # Debug: Check total study sessions for this user
+        total_sessions = db.query(func.count(models.StudySession.id))\
+            .filter(models.StudySession.user_id == user_id)\
+            .scalar() or 0
+        print(f"  Total study sessions for user: {total_sessions}")
+        
+        # Debug: Check today's sessions specifically
+        todays_sessions = db.query(models.StudySession)\
+            .filter(models.StudySession.user_id == user_id)\
+            .filter(func.date(models.StudySession.created_at) == today)\
+            .all()
+        print(f"  Today's sessions count: {len(todays_sessions)}")
+        for session in todays_sessions:
+            print(f"    Session: {session.duration_minutes} minutes at {session.created_at}")
         
         return {
             "study_today": study_today,
