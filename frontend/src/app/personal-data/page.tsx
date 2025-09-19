@@ -7,11 +7,11 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import StudyStatsChart from "@/components/analytics/StudyStatsChart";
 import HabitCompletionChart from "@/components/analytics/HabitCompletionChart";
 import CorrelationChart from "@/components/analytics/CorrelationChart";
-import { 
-  ChartBarIcon, 
-  ClockIcon, 
-  CheckCircleIcon, 
-  ArrowTrendingUpIcon 
+import {
+  ChartBarIcon,
+  ClockIcon,
+  CheckCircleIcon,
+  ArrowTrendingUpIcon
 } from "@heroicons/react/24/outline";
 
 interface StudyStats {

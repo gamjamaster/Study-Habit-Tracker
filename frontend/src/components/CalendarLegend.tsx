@@ -1,4 +1,4 @@
-export default function CalendarLegend() { // export CalendarLengend by default
+export default function CalendarLegend() { // export CalendarLegend by default
   return (
     // Css of the legends
     <div className="flex gap-4 items-center text-sm text-gray-600">

@@ -6,6 +6,7 @@ from auth import get_current_user
 import models
 from datetime import date
 from datetime import timedelta
+from cache import cache_manager
 
 router = APIRouter()
 
@@ -15,6 +16,15 @@ def dashboard_summary(
     db: Session = Depends(get_db)
 ):
     try:
+        # Generate cache key
+        cache_key = cache_manager.get_cache_key(user_id, "dashboard_summary")
+
+        # Check cache for data
+        cached_data = cache_manager.get(cache_key)
+        if cached_data:
+            print(f"📋 Dashboard summary cache hit for user {user_id}")
+            return cached_data
+
         print("API called")
         today = date.today()
 
@@ -22,7 +32,7 @@ def dashboard_summary(
         study_today = db.query(func.sum(models.StudySession.duration_minutes))\
             .filter(models.StudySession.user_id == user_id)\
             .filter(func.date(models.StudySession.created_at) == today)\
-            .scalar() or 0 
+            .scalar() or 0
 
         # Count unique habit completions for today (user's habits only)
         habit_done = db.query(func.count(func.distinct(models.HabitLog.habit_id)))\
@@ -36,18 +46,24 @@ def dashboard_summary(
             .filter(models.Habit.user_id == user_id)\
             .scalar() or 0
 
+        result = {
+            "study_today": study_today,
+            "habit_done": habit_done,
+            "habit_total": habit_total,
+            "habit_percent": int((habit_done / habit_total * 100) if habit_total > 0 else 0)
+        }
+
         print(f"Dashboard summary for user {user_id}:")
         print(f"  Today: {today}")
         print(f"  Study today: {study_today} minutes")
         print(f"  Habit done: {habit_done}")
         print(f"  Habit total: {habit_total}")
-        
-        # Debug: Check habit completion details
-        todays_habit_logs = db.query(models.HabitLog)\
-            .join(models.Habit, models.HabitLog.habit_id == models.Habit.id)\
-            .filter(models.Habit.user_id == user_id)\
-            .filter(func.date(models.HabitLog.completed_date) == today)\
-            .all()
+
+        # Store result in cache (5 minutes)
+        cache_manager.set(cache_key, result, expire_seconds=300)
+        print(f"💾 Dashboard summary cached for user {user_id}")
+
+        return result
         print(f"  Today's habit log entries: {len(todays_habit_logs)}")
         for log in todays_habit_logs:
             habit_name = db.query(models.Habit).filter(models.Habit.id == log.habit_id).first()

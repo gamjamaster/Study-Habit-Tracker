@@ -15,7 +15,7 @@ interface Subject {
     created_at: string; // timestamp when the subject was created
 }
 
-// main content component for the subjects page  
+// main content component for the subjects page
 function SubjectsContent() {
     const { user, session } = useAuth(); // get authentication state
     // state hook to store the list of subjects, initialized as empty array with Subject type

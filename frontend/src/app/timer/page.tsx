@@ -24,7 +24,7 @@ function TimerContent() {
   // Define fetchSubjects function
   const fetchSubjects = useCallback(async () => {
     if (!session?.access_token) return;
-    
+
     try {
       const response = await fetch(API_ENDPOINTS.SUBJECTS, {
         headers: {
@@ -46,9 +46,7 @@ function TimerContent() {
     if (session?.access_token) {
       fetchSubjects();
     }
-  }, [session, fetchSubjects]);
-
-  // Prevent page scrolling while on the timer page
+  }, [session, fetchSubjects]);  // Prevent page scrolling while on the timer page
   useEffect(() => {
     const prevHtmlOverflow = document.documentElement.style.overflow;
     const prevBodyOverflow = document.body.style.overflow;

@@ -1,10 +1,31 @@
 "use client"; // declares that this is the client components
 
-import { useState } from "react";
-import Calendar from "@/components/Calendar"; // imports the calendar UI
+import { useState, Suspense } from "react";
+import dynamic from "next/dynamic";
 import CalendarLegend from "@/components/CalendarLegend"; // imports the calendar legends
-import ActivityHeatmap from "@/components/ActivityHeatmap"; // imports the activity heatmap
 import ProtectedRoute from "@/components/ProtectedRoute"; // import protected route
+
+// Dynamic loading for Calendar component performance optimization
+const Calendar = dynamic(() => import("@/components/Calendar"), {
+  loading: () => (
+    <div className="flex justify-center items-center h-96">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      <span className="ml-2 text-gray-600">Loading calendar...</span>
+    </div>
+  ),
+  ssr: false
+});
+
+// Dynamic loading for ActivityHeatmap component performance optimization
+const ActivityHeatmap = dynamic(() => import("@/components/ActivityHeatmap"), {
+  loading: () => (
+    <div className="flex justify-center items-center h-96">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+      <span className="ml-2 text-gray-600">Loading heatmap...</span>
+    </div>
+  ),
+  ssr: false
+});
 
 export default function CalendarPage() {
   return (
@@ -22,7 +43,7 @@ function CalendarContent() {
 
   return (
     // wraps the entire calendar section
-    <section>  
+    <section>
       {/* calendar title and view toggles */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Calendar</h1>
@@ -95,18 +116,32 @@ function CalendarContent() {
           {/* wraps the calendar with a card UI */}
           <div className="bg-white rounded-xl shadow p-6">
             {/* renders the actual calendar */}
-            <Calendar />
+            <Suspense fallback={
+              <div className="flex justify-center items-center h-96">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                <span className="ml-2 text-gray-600">달력 로딩 중...</span>
+              </div>
+            }>
+              <Calendar />
+            </Suspense>
           </div>
         </>
       )}
 
       {/* Heatmap view */}
       {viewMode === "heatmap" && (
-        <ActivityHeatmap 
-          year={selectedYear} 
-          activityType={activityType}
-          onActivityTypeChange={setActivityType}
-        />
+        <Suspense fallback={
+          <div className="flex justify-center items-center h-96">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+            <span className="ml-2 text-gray-600">히트맵 로딩 중...</span>
+          </div>
+        }>
+          <ActivityHeatmap 
+            year={selectedYear} 
+            activityType={activityType}
+            onActivityTypeChange={setActivityType}
+          />
+        </Suspense>
       )}
 
       {/* Guide message */}

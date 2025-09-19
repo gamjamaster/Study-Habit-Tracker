@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker # tool to make a session to converse wit
 # Database URL - supports both SQLite (local) and PostgreSQL (production)
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./study_habit.db")
 
-# PostgreSQL URL이면 psycopg2 연결 방식으로 변경
+# If PostgreSQL URL, change to psycopg2 connection method
 if DATABASE_URL.startswith("postgresql://"):
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
 
@@ -21,11 +21,11 @@ else:
     # PostgreSQL configuration
     engine = create_engine(
         DATABASE_URL,
-        pool_pre_ping=True,      # 연결 상태 확인
-        pool_recycle=300,        # 연결 재사용 시간 (5분)
-        pool_size=5,             # 연결 풀 크기
-        max_overflow=10,         # 최대 연결 수
-        echo=False               # SQL 로그 비활성화 (프로덕션)
+        pool_pre_ping=True,      # Check connection status
+        pool_recycle=300,        # Connection reuse time (5 minutes)
+        pool_size=5,             # Connection pool size
+        max_overflow=10,         # Maximum number of connections
+        echo=False               # Disable SQL logging (production)
     )
 
 # db session generator

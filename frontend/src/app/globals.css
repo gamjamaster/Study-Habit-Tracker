@@ -1,4 +1,4 @@
-@import "tailwindcss"; /* calls every utility calss and style to the project*/
+@import "tailwindcss"; /* calls every utility class and style to the project*/
 
 @theme { /* custom theme declaration block*/
   /* font */
@@ -39,7 +39,7 @@ body {
 
 .react-calendar__tile--active,
 .react-calendar__tile--now {
-  background: transparent !important;    /* 기본 배경 없애고 */
+  background: transparent !important;    /* Remove default background */
   position: relative;
 }
 

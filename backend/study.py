@@ -7,6 +7,7 @@ from database import get_db
 from models import Subject, StudySession
 import schemas
 from auth import get_current_user  # import authentication function
+from cache import cache_manager
 
 router = APIRouter()
 
@@ -17,7 +18,21 @@ def read_subjects(
     db: Session = Depends(get_db)
 ):
     """Reads all subjects for current user only"""
+    # Generate cache key
+    cache_key = cache_manager.get_cache_key(user_id, "subjects")
+
+    # Check cache for data
+    cached_subjects = cache_manager.get(cache_key)
+    if cached_subjects:
+        print(f"📋 Subjects cache hit for user {user_id}")
+        return cached_subjects
+
     subjects = db.query(Subject).filter(Subject.user_id == user_id).all()
+
+    # Store result in cache (15 minutes)
+    cache_manager.set(cache_key, subjects, expire_seconds=900)
+    print(f"💾 Subjects cached for user {user_id}")
+
     return subjects
 
 # 2. Create new subject
@@ -45,7 +60,21 @@ def read_study_sessions(
     db: Session = Depends(get_db)
 ):
     """Reads all study sessions for current user only"""
+    # Generate cache key
+    cache_key = cache_manager.get_cache_key(user_id, "study_sessions")
+
+    # Check cache for data
+    cached_sessions = cache_manager.get(cache_key)
+    if cached_sessions:
+        print(f"📋 Study sessions cache hit for user {user_id}")
+        return cached_sessions
+
     study_sessions = db.query(StudySession).filter(StudySession.user_id == user_id).all()
+
+    # Store result in cache (10 minutes)
+    cache_manager.set(cache_key, study_sessions, expire_seconds=600)
+    print(f"💾 Study sessions cached for user {user_id}")
+
     return study_sessions
 
 # 4. Create new study session
@@ -73,6 +102,12 @@ def create_study_session(
     db.add(db_study_session)
     db.commit()
     db.refresh(db_study_session)
+
+    # Invalidate cache when data changes (also invalidate dashboard summary)
+    dashboard_cache_key = cache_manager.get_cache_key(user_id, "dashboard_summary")
+    cache_manager.delete(dashboard_cache_key)
+    print(f"🗑️ Dashboard summary cache invalidated for user {user_id}")
+
     return db_study_session
 
 # 5. Delete subject

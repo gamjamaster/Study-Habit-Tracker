@@ -28,7 +28,7 @@ async function fetchSubjects(token: string) {
     console.log("🔄 Fetching subjects from backend..."); // debug log
     const controller = new AbortController(); // create timeout controller
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-    
+
     const res = await fetch(API_ENDPOINTS.SUBJECTS, {
       headers: {
         'Authorization': `Bearer ${token}`,  // add JWT token to request
@@ -36,14 +36,14 @@ async function fetchSubjects(token: string) {
       },
       signal: controller.signal, // attach timeout signal
     });
-    
+
     clearTimeout(timeoutId); // clear timeout on success
-    
+
     if (!res.ok) {
       console.error("❌ Failed to fetch subjects:", res.status);
       return [];
     }
-    
+
     const data = await res.json();
     console.log("✅ Subjects loaded:", data.length, "items");
     return data;
