@@ -13,9 +13,21 @@ async def verify_supabase_token(credentials: HTTPAuthorizationCredentials = Depe
     try:
         token = credentials.credentials
         
-        # 개발 환경에서는 서명 검증 비활성화
-        # 실제 프로덕션에서는 Supabase JWT Secret으로 검증 필요
-        payload = jwt.decode(token, options={"verify_signature": False})
+        # 환경 변수에서 JWT Secret 가져오기
+        supabase_jwt_secret = os.getenv("SUPABASE_JWT_SECRET")
+        
+        if supabase_jwt_secret:
+            # 프로덕션 환경: 실제 서명 검증
+            payload = jwt.decode(
+                token, 
+                supabase_jwt_secret, 
+                algorithms=["HS256"],
+                audience="authenticated"
+            )
+        else:
+            # 개발 환경: 서명 검증 비활성화 (경고 로그 추가)
+            print("WARNING: SUPABASE_JWT_SECRET not set. Running in development mode with signature verification disabled.")
+            payload = jwt.decode(token, options={"verify_signature": False})
         
         # extract user id from Supabase JWT
         user_id = payload.get("sub")  # 'sub' field saves the user id
@@ -67,45 +79,32 @@ async def get_current_user_optional(
         return None
     
     try:
-        return await verify_supabase_token(credentials)
-    except HTTPException:
+        # 환경 변수에서 JWT Secret 가져오기
+        supabase_jwt_secret = os.getenv("SUPABASE_JWT_SECRET")
+        
+        if supabase_jwt_secret:
+            # 프로덕션 환경: 실제 서명 검증
+            payload = jwt.decode(
+                credentials.credentials, 
+                supabase_jwt_secret, 
+                algorithms=["HS256"],
+                audience="authenticated"
+            )
+        else:
+            # 개발 환경: 서명 검증 비활성화
+            payload = jwt.decode(credentials.credentials, options={"verify_signature": False})
+        
+        user_id = payload.get("sub")
+        return user_id if user_id else None
+        
+    except Exception:
         return None
 
 # 실제 프로덕션 환경에서는 Supabase JWT Secret으로 토큰 검증
-async def verify_supabase_token_production(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
-    """
-    프로덕션 환경용: 실제 Supabase JWT Secret으로 토큰 검증
-    """
-    try:
-        token = credentials.credentials
-        supabase_jwt_secret = os.getenv("SUPABASE_JWT_SECRET")
-        
-        if not supabase_jwt_secret:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="JWT secret not configured"
-            )
-        
-        # 실제 서명 검증
-        payload = jwt.decode(
-            token, 
-            supabase_jwt_secret, 
-            algorithms=["HS256"],
-            audience="authenticated"
-        )
-        
-        user_id = payload.get("sub")
-        
-        if not user_id:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token: no user ID found"
-            )
-        
-        return user_id
-        
-    except jwt.InvalidTokenError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid token: {str(e)}"
-        )
+# (이제 verify_supabase_token 함수에서 환경에 따라 자동 처리됨)
+# async def verify_supabase_token_production(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
+#     """
+#     프로덕션 환경용: 실제 Supabase JWT Secret으로 토큰 검증
+#     (더 이상 사용되지 않음 - verify_supabase_token에서 통합)
+#     """
+#     # ... (코드 생략)

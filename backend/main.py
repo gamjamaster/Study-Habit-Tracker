@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException # brings the main class FastAPI
 from fastapi.middleware.cors import CORSMiddleware # tool that gives the web access to this api
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from sqlalchemy.orm import Session
 from typing import List # list type
 from datetime import datetime, timedelta
@@ -8,6 +9,7 @@ from models import Subject, StudySession, Habit, HabitLog, Goal
 from auth import get_current_user  # autshentication function
 import calendar
 import schemas  # for goal schemas
+import os
 
 # import from database.py, main.py, schemas.py
 from database import get_db, create_tables, engine
@@ -41,9 +43,13 @@ app = FastAPI(
     version = "1.0.0"
 ) 
 
+app.add_middleware(HTTPSRedirectMiddleware)
+
+cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+
 app.add_middleware(
     CORSMiddleware, # CORS => web browser security protocol
-    allow_origins = ["*"], # allow access to the api at these URLs.
+    allow_origins = cors_origins, # 환경 변수에서 가져온 도메인 리스트 사용
     allow_credentials = True, # allows request for credentials (cookies, authorization header and ...)
     allow_methods = ["*"], # allows every http methods (GET, POST, PUT, DELETE)
     allow_headers = ["*"], # allows every header
