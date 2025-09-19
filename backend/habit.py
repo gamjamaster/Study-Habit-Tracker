@@ -134,6 +134,18 @@ def create_habit_log(
     ).first()
     if not habit:
         raise HTTPException(status_code=404, detail="Cannot find the habit or access denied")
+    
+    # Check if a log already exists for this habit on this date
+    existing_log = db.query(HabitLog).filter(
+        HabitLog.habit_id == habit_id,
+        HabitLog.user_id == user_id,
+        HabitLog.completed_date == log.completed_date
+    ).first()
+    
+    if existing_log:
+        # Return the existing log instead of creating a duplicate
+        return existing_log
+    
     db_log = HabitLog(
         habit_id=habit_id,
         completed_date=log.completed_date,

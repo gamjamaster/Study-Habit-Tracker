@@ -106,7 +106,7 @@ def dashboard_weekly(
             
             # load the habit achievement for that day for current user only
             # Use both UTC date and local date to handle timezone issues
-            habit_count = db.query(func.count(models.HabitLog.id))\
+            habit_count = db.query(func.count(func.distinct(models.HabitLog.habit_id)))\
                 .join(models.Habit, models.HabitLog.habit_id == models.Habit.id)\
                 .filter(
                     func.date(text("completed_date AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific/Fiji'")) == target_date

@@ -579,7 +579,7 @@ def get_habit_completion_stats(
         # completion rate by day of the week for current user only
         weekday_completion = db.query(
             date_func(HabitLog.completed_date, '%w').label('weekday'),
-            func.count(HabitLog.id).label('completion_count')
+            func.count(func.distinct(HabitLog.habit_id)).label('completion_count')
         ).join(Habit, HabitLog.habit_id == Habit.id).filter(
             Habit.user_id == user_id,  # filter by user_id
             HabitLog.completed_date >= start_date
@@ -590,7 +590,7 @@ def get_habit_completion_stats(
         # completion rate by habit for current user only
         habit_stats = db.query(
             Habit.name,
-            func.count(HabitLog.id).label('completion_count')
+            func.count(func.distinct(HabitLog.habit_id)).label('completion_count')
         ).join(HabitLog).filter(
             Habit.user_id == user_id,  # filter by user_id
             HabitLog.completed_date >= start_date
@@ -651,7 +651,7 @@ def get_study_habit_correlation(
 
         habit_data = db.query(
             date_func(HabitLog.completed_date, '%Y-%m-%d').label('date'),
-            func.count(HabitLog.id).label('habit_count')
+            func.count(func.distinct(HabitLog.habit_id)).label('habit_count')
         ).join(Habit, HabitLog.habit_id == Habit.id).filter(
             Habit.user_id == user_id,  # filter by user_id
             HabitLog.completed_date >= start_date
