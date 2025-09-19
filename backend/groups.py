@@ -11,6 +11,35 @@ from auth import get_current_user
 
 router = APIRouter()
 
+def ensure_profile_exists(user_id: str, db: Session) -> Profile:
+    """Ensure a profile exists for the user, create one if it doesn't exist"""
+    profile = db.query(Profile).filter(Profile.id == user_id).first()
+
+    if not profile:
+        # Try to get user info from Supabase or create a basic profile
+        # For now, create a basic profile with the user ID as identifier
+        profile = Profile(
+            id=user_id,
+            user_id=user_id,
+            email=f"user_{user_id[:8]}@temp.local",  # Temporary email
+            full_name=f"User {user_id[:8]}"  # Default name
+        )
+        try:
+            db.add(profile)
+            db.commit()
+            db.refresh(profile)
+        except Exception as e:
+            db.rollback()
+            print(f"Failed to create profile for user {user_id}: {e}")
+            # Return a temporary profile object for the leaderboard
+            profile = type('Profile', (), {
+                'id': user_id,
+                'full_name': f"User {user_id[:8]}",
+                'email': f"user_{user_id[:8]}@temp.local"
+            })()
+
+    return profile
+
 # 1. Create a new study group
 @router.post("/groups", response_model=schemas.StudyGroup)
 def create_group(
@@ -161,9 +190,17 @@ def get_group_leaderboard(
     leaderboard = []
 
     for member_id in member_ids:
-        # Get user info from Profile table (full_name as username)
-        profile = db.query(Profile).filter(Profile.user_id == member_id).first()
-        username = profile.full_name if profile else "Unknown User"
+        # Get user info from Profile table (ensure profile exists)
+        profile = ensure_profile_exists(member_id, db)
+
+        # Use full_name if available, otherwise use email (without domain for privacy)
+        if profile.full_name and profile.full_name.strip():
+            username = profile.full_name.strip()
+        elif hasattr(profile, 'email') and profile.email:
+            # Use email username part (before @) for privacy
+            username = profile.email.split('@')[0]
+        else:
+            username = f"User {member_id[:8]}"  # Fallback with partial ID
 
         # Calculate study statistics for the week
         study_sessions = db.query(StudySession).filter(

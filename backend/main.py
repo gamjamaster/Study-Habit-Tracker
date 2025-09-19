@@ -64,6 +64,7 @@ async def handle_options(path: str):
 @app.post("/profiles/", response_model=schemas.Profile)
 def create_profile(
     profile: schemas.ProfileCreate,
+    user_id: str = Depends(get_current_user),  # Get authenticated user ID
     db: Session = Depends(get_db)
 ):
     """Create a new user profile with email uniqueness validation"""
@@ -75,10 +76,13 @@ def create_profile(
             detail="An account with this email already exists. Please use a different email address."
         )
 
+    # Use provided ID or authenticated user ID
+    profile_id = profile.id if profile.id else user_id
+
     # Create new profile
     db_profile = Profile(
-        id=profile.id if hasattr(profile, 'id') else None,  # Supabase might provide the ID
-        user_id=profile.id if hasattr(profile, 'id') else None,
+        id=profile_id,
+        user_id=profile_id,  # Also set user_id for consistency
         email=profile.email,
         full_name=profile.full_name,
         avatar_url=profile.avatar_url
@@ -105,7 +109,7 @@ def get_my_profile(
     db: Session = Depends(get_db)
 ):
     """Get current user's profile"""
-    profile = db.query(Profile).filter(Profile.user_id == user_id).first()
+    profile = db.query(Profile).filter(Profile.id == user_id).first()
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
     return profile
@@ -117,7 +121,7 @@ def update_my_profile(
     db: Session = Depends(get_db)
 ):
     """Update current user's profile"""
-    profile = db.query(Profile).filter(Profile.user_id == user_id).first()
+    profile = db.query(Profile).filter(Profile.id == user_id).first()
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
 
@@ -125,7 +129,7 @@ def update_my_profile(
     if profile_update.email != profile.email:
         existing_profile = db.query(Profile).filter(
             Profile.email == profile_update.email,
-            Profile.user_id != user_id  # Exclude current user
+            Profile.id != user_id  # Exclude current user
         ).first()
         if existing_profile:
             raise HTTPException(

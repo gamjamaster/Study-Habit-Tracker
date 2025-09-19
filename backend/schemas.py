@@ -196,7 +196,7 @@ class ProfileBase(BaseModel):
     avatar_url: Optional[str] = None
 
 class ProfileCreate(ProfileBase):
-    pass
+    id: Optional[str] = None  # Optional ID from Supabase
 
 class Profile(ProfileBase):
     id: str
