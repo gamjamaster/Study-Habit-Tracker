@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { PlusIcon, UsersIcon, TrophyIcon, ClipboardIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, UsersIcon, ClipboardIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { API_ENDPOINTS } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -100,6 +100,39 @@ function GroupsContent() {
   const copyInviteCode = (inviteCode: string) => {
     navigator.clipboard.writeText(inviteCode);
     alert("Invite code copied to clipboard!");
+  };
+
+  // Delete group
+  const deleteGroup = async (groupId: number, groupName: string) => {
+    if (!confirm(`Are you sure you want to delete "${groupName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    if (!session) {
+      alert("Please log in to delete a group");
+      return;
+    }
+
+    try {
+      const response = await fetch(API_ENDPOINTS.deleteGroup(groupId), {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        setGroups(groups.filter(group => group.id !== groupId));
+        alert("Group deleted successfully!");
+      } else {
+        const error = await response.json();
+        alert(`Failed to delete group: ${error.detail}`);
+      }
+    } catch (error) {
+      console.error('Error deleting group:', error);
+      alert("An error occurred while deleting the group");
+    }
   };
 
   if (loading) {
@@ -231,6 +264,14 @@ function GroupsContent() {
                   >
                     <ClipboardIcon className="w-4 h-4" />
                     Copy Invite Code
+                  </button>
+
+                  <button
+                    onClick={() => deleteGroup(group.id, group.name)}
+                    className="w-full border border-red-300 hover:bg-red-50 text-red-600 px-4 py-2 rounded-lg text-center flex items-center justify-center gap-2"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                    Delete Group
                   </button>
                 </div>
               </div>

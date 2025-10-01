@@ -22,10 +22,8 @@ def dashboard_summary(
         # Check cache for data
         cached_data = cache_manager.get(cache_key)
         if cached_data:
-            print(f"📋 Dashboard summary cache hit for user {user_id}")
             return cached_data
 
-        print("API called")
         today = date.today()
 
         # Get today's study time for the current user (simplified timezone handling)
@@ -53,50 +51,11 @@ def dashboard_summary(
             "habit_percent": int((habit_done / habit_total * 100) if habit_total > 0 else 0)
         }
 
-        print(f"Dashboard summary for user {user_id}:")
-        print(f"  Today: {today}")
-        print(f"  Study today: {study_today} minutes")
-        print(f"  Habit done: {habit_done}")
-        print(f"  Habit total: {habit_total}")
-
         # Store result in cache (5 minutes)
         cache_manager.set(cache_key, result, expire_seconds=300)
-        print(f"💾 Dashboard summary cached for user {user_id}")
 
         return result
-        print(f"  Today's habit log entries: {len(todays_habit_logs)}")
-        for log in todays_habit_logs:
-            habit_name = db.query(models.Habit).filter(models.Habit.id == log.habit_id).first()
-            print(f"    Habit: {habit_name.name if habit_name else 'Unknown'} at {log.completed_date}")
-        
-        # Debug: Check all habits for this user
-        all_habits = db.query(models.Habit)\
-            .filter(models.Habit.user_id == user_id)\
-            .all()
-        print(f"  Total habits for user: {len(all_habits)}")
-        for habit in all_habits:
-            print(f"    Habit: {habit.name} (ID: {habit.id})")
-        total_sessions = db.query(func.count(models.StudySession.id))\
-            .filter(models.StudySession.user_id == user_id)\
-            .scalar() or 0
-        print(f"  Total study sessions for user: {total_sessions}")
-        
-        # Debug: Check today's sessions specifically
-        todays_sessions = db.query(models.StudySession)\
-            .filter(models.StudySession.user_id == user_id)\
-            .filter(func.date(models.StudySession.created_at) == today)\
-            .all()
-        print(f"  Today's sessions count: {len(todays_sessions)}")
-        for session in todays_sessions:
-            print(f"    Session: {session.duration_minutes} minutes at {session.created_at}")
-        
-        return {
-            "study_today": study_today,
-            "habit_done": habit_done,
-            "habit_total": habit_total
-        }
     except Exception as e:
-        print("API error:", e)
         return {"error": str(e)}
     
 @router.get("/dashboard/weekly")  # new API endpoint for weekly data
@@ -105,7 +64,6 @@ def dashboard_weekly(
     db: Session = Depends(get_db)
 ):
     try:
-        print("Weekly API called")  # API call log
         today = date.today()
 
         weekly_data = []  # list for saving weekly data
@@ -137,7 +95,6 @@ def dashboard_weekly(
                 "habit_count": habit_count  # habit count
             })
 
-        print("Weekly API returning")  # API return log
         return{
             "labels": [day["day"] for day in weekly_data],  # chart label (day)
             "study_data": [day["study_time"] for day in weekly_data],  # study data
@@ -145,7 +102,6 @@ def dashboard_weekly(
         }
     
     except Exception as e:
-        print("Weekly API error:", e)  # error log
         return {"error": str(e)}  # return error
     
 @router.get("/dashboard/leaderboard/{group_id}")
@@ -154,7 +110,6 @@ def dashboard_leaderboard(
     db: Session = Depends(get_db)
 ):
     try:
-        print("Leaderboard API called")
         leaderboard = db.query(
             models.User.username,
             func.sum(models.StudySession.duration_minutes).label("total_study_time")
@@ -172,8 +127,6 @@ def dashboard_leaderboard(
             for item in leaderboard
         ]
 
-        print("Leaderboard API returning")
         return {"leaderboard": result}
     except Exception as e:
-        print("Leaderboard API error:", e)
         return {"error": str(e)}

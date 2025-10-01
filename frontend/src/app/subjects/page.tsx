@@ -33,7 +33,6 @@ function SubjectsContent() {
     const fetchSubjects = useCallback(async () => {
         // check authentication before making API calls
         if (!session) {
-            console.log('Subjects: No session available');
             setLoading(false);
             return;
         }
@@ -88,7 +87,7 @@ function SubjectsContent() {
 
         try { // try block for error handling
             // make DELETE request to backend with the subject ID in URL and JWT token
-            const response = await fetch(`${API_ENDPOINTS.SUBJECTS}/${subjectId}`, {
+            const response = await fetch(API_ENDPOINTS.subjectById(subjectId), {
                 method: "DELETE", // specify HTTP DELETE method
                 headers: {
                     'Authorization': `Bearer ${session.access_token}`, // add JWT token

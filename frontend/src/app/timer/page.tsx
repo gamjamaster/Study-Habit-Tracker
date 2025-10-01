@@ -21,6 +21,33 @@ function TimerContent() {
   const [saving, setSaving] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Load timer state from localStorage on component mount
+  useEffect(() => {
+    const savedTimerState = localStorage.getItem('timerState');
+    if (savedTimerState) {
+      try {
+        const { time: savedTime, isRunning: savedIsRunning, isPaused: savedIsPaused, selectedSubject: savedSubject } = JSON.parse(savedTimerState);
+        setTime(savedTime || 0);
+        setIsRunning(savedIsRunning || false);
+        setIsPaused(savedIsPaused || false);
+        setSelectedSubject(savedSubject || '');
+      } catch (error) {
+        console.error('Error loading timer state from localStorage:', error);
+      }
+    }
+  }, []);
+
+  // Save timer state to localStorage whenever it changes
+  useEffect(() => {
+    const timerState = {
+      time,
+      isRunning,
+      isPaused,
+      selectedSubject
+    };
+    localStorage.setItem('timerState', JSON.stringify(timerState));
+  }, [time, isRunning, isPaused, selectedSubject]);
+
   // Define fetchSubjects function
   const fetchSubjects = useCallback(async () => {
     if (!session?.access_token) return;
@@ -97,6 +124,10 @@ function TimerContent() {
   const stopTimer = () => {
     setIsRunning(false);
     setIsPaused(false);
+    setTime(0);
+    setSelectedSubject('');
+    // Clear timer state from localStorage when stopped
+    localStorage.removeItem('timerState');
   };
 
   const saveSession = async () => {
@@ -133,6 +164,8 @@ function TimerContent() {
         alert('Study session saved successfully!');
         setTime(0);
         setSelectedSubject('');
+        // Clear timer state from localStorage after saving
+        localStorage.removeItem('timerState');
       } else {
         const errorData = await response.json();
         console.error('Server error:', errorData);

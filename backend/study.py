@@ -24,14 +24,12 @@ def read_subjects(
     # Check cache for data
     cached_subjects = cache_manager.get(cache_key)
     if cached_subjects:
-        print(f"📋 Subjects cache hit for user {user_id}")
         return cached_subjects
 
     subjects = db.query(Subject).filter(Subject.user_id == user_id).all()
 
     # Store result in cache (15 minutes)
     cache_manager.set(cache_key, subjects, expire_seconds=900)
-    print(f"💾 Subjects cached for user {user_id}")
 
     return subjects
 
@@ -66,14 +64,12 @@ def read_study_sessions(
     # Check cache for data
     cached_sessions = cache_manager.get(cache_key)
     if cached_sessions:
-        print(f"📋 Study sessions cache hit for user {user_id}")
         return cached_sessions
 
     study_sessions = db.query(StudySession).filter(StudySession.user_id == user_id).all()
 
     # Store result in cache (10 minutes)
     cache_manager.set(cache_key, study_sessions, expire_seconds=600)
-    print(f"💾 Study sessions cached for user {user_id}")
 
     return study_sessions
 
@@ -106,8 +102,6 @@ def create_study_session(
     # Invalidate cache when data changes (also invalidate dashboard summary)
     dashboard_cache_key = cache_manager.get_cache_key(user_id, "dashboard_summary")
     cache_manager.delete(dashboard_cache_key)
-    print(f"🗑️ Dashboard summary cache invalidated for user {user_id}")
-
     return db_study_session
 
 # 5. Delete subject

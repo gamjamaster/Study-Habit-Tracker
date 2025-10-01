@@ -161,7 +161,6 @@ app.include_router(groups_router)
 @app.on_event("startup")
 def startup_event():
     create_tables()
-    print("Database table has been created.")
 
 @app.get("/") # if the root directory(backend) receives get request,
 def read_root(): # execute this function

@@ -45,7 +45,7 @@ export default function SubjectForm({ onCreated, onUpdated, editSubject, onCance
     try {
       if (editSubject) {
         // Update existing subject
-        const res = await fetch(`${API_ENDPOINTS.SUBJECTS}/${editSubject.id}`, {
+        const res = await fetch(API_ENDPOINTS.subjectById(editSubject.id), {
           method: "PUT",
           headers: { 
             "Content-Type": "application/json",

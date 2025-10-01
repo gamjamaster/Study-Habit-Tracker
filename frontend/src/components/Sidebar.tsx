@@ -121,7 +121,6 @@ export default function Sidebar() {
               {/* Sign Out Button */}
               <button
                 onClick={async () => {
-                  console.log('🚪 Sign out button clicked');
 
                   try {
                     const { error } = await signOut();
@@ -133,8 +132,6 @@ export default function Sidebar() {
                         return;
                       }
                     }
-
-                    console.log('✅ Sign out successful, redirecting...');
 
                     // Force page reload to clear any cached state in production
                     if (typeof window !== 'undefined' && window.location) {

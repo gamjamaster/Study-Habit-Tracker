@@ -25,7 +25,6 @@ interface StudyLog {
 // load subjects with timeout and error handling
 async function fetchSubjects(token: string) {
   try {
-    console.log("🔄 Fetching subjects from backend..."); // debug log
     const controller = new AbortController(); // create timeout controller
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
@@ -45,7 +44,6 @@ async function fetchSubjects(token: string) {
     }
 
     const data = await res.json();
-    console.log("✅ Subjects loaded:", data.length, "items");
     return data;
   } catch (error) {
     if (error instanceof Error) {
@@ -64,7 +62,6 @@ async function fetchSubjects(token: string) {
 // load study logs with timeout and error handling
 async function fetchStudyLogs(token: string) {
   try {
-    console.log("🔄 Fetching study logs from backend..."); // debug log
     const controller = new AbortController(); // create timeout controller
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
     
@@ -84,7 +81,6 @@ async function fetchStudyLogs(token: string) {
     }
     
     const data = await res.json();
-    console.log("✅ Study logs loaded:", data.length, "items");
     return data;
   } catch (error) {
     if (error instanceof Error) {
@@ -112,19 +108,16 @@ function StudyContent() {
     async function loadData() {
       // check if user is authenticated before making API calls
       if (!user || !session) {
-        console.log('Study: No user or session', { user: !!user, session: !!session });
         setLoading(false);
         return;
       }
 
       try {
         setLoading(true);
-        console.log("Fetching data from backend..."); // debug log
         const [subjectList, logList] = await Promise.all([
           fetchSubjects(session.access_token), 
           fetchStudyLogs(session.access_token)
         ]);
-        console.log("Data received:", { subjectList, logList }); // debug log
         setSubjects(subjectList);
         setLogs(logList);
       } catch (error) {
@@ -141,7 +134,6 @@ function StudyContent() {
 
   // add study log
   const addLog = async () => {
-    console.log("🔄 Adding study log...", newLog);
     
     if (!newLog.subject_id || !newLog.minutes) {
       alert("Please select a subject and enter study time.");
@@ -167,8 +159,6 @@ function StudyContent() {
         notes: newLog.note || ""
       };
       
-      console.log("📤 Sending payload:", payload);
-      
       const res = await fetch(API_ENDPOINTS.STUDY_SESSIONS, {
         method: "POST",
         headers: { 
@@ -178,11 +168,8 @@ function StudyContent() {
         body: JSON.stringify(payload)
       });
       
-      console.log("📥 Response status:", res.status);
-      
       if (res.ok) {
         const saved = await res.json();
-        console.log("✅ Study log saved:", saved);
         setLogs(logs => [...logs, saved]);
         setNewLog({ subject_id: "", minutes: "", note: "" });
         alert("Study log saved successfully!");

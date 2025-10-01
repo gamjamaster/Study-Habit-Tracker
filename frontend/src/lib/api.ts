@@ -18,9 +18,11 @@ export const API_ENDPOINTS = {
   habitById: (id: number) => `${API_BASE_URL}/habits/${id}`,
   habitLogs: (id: number) => `${API_BASE_URL}/habits/${id}/logs`,
   habitLogById: (id: number) => `${API_BASE_URL}/habit-logs/${id}`,
+  subjectById: (id: number) => `${API_BASE_URL}/subjects/${id}`,
   groupById: (id: number) => `${API_BASE_URL}/groups/${id}`,
   groupLeaderboard: (id: number) => `${API_BASE_URL}/groups/${id}/leaderboard`,
   leaveGroup: (id: number) => `${API_BASE_URL}/groups/${id}/leave`,
+  deleteGroup: (id: number) => `${API_BASE_URL}/groups/${id}`,
 
   // Analytics endpoints
   ANALYTICS_STUDY_STATS: `${API_BASE_URL}/analytics/study-stats`,

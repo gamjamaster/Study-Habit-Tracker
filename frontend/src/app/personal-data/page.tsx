@@ -68,7 +68,6 @@ function PersonalDataContent() {
   const fetchAnalyticsData = useCallback(async () => {
     // check authentication before making API calls
     if (!user || !session) {
-      console.log('PersonalData: No user or session', { user: !!user, session: !!session });
       setLoading(false);
       return;
     }

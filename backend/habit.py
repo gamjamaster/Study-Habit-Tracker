@@ -28,7 +28,6 @@ def read_habits(
     # Check cache for data
     cached_habits = cache_manager.get(cache_key)
     if cached_habits:
-        print(f"📋 Habits cache hit for user {user_id}")
         return cached_habits
 
     habits = db.query(Habit).filter(Habit.user_id == user_id).all()
@@ -42,7 +41,6 @@ def read_habits(
 
     # Store result in cache (10 minutes)
     cache_manager.set(cache_key, habits, expire_seconds=600)
-    print(f"💾 Habits cached for user {user_id}")
 
     return habits
 
@@ -68,7 +66,6 @@ def create_habit(
     # Invalidate cache when data changes
     cache_key = cache_manager.get_cache_key(user_id, "habits")
     cache_manager.delete(cache_key)
-    print(f"🗑️ Habits cache invalidated for user {user_id}")
 
     return db_habit
 
@@ -179,7 +176,6 @@ def create_habit_log(
     # 데이터 변경 시 캐시 무효화 (dashboard summary도 함께 무효화)
     dashboard_cache_key = cache_manager.get_cache_key(user_id, "dashboard_summary")
     cache_manager.delete(dashboard_cache_key)
-    print(f"🗑️ Dashboard summary cache invalidated for user {user_id}")
 
     return db_log
 

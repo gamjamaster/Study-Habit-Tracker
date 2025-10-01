@@ -38,11 +38,6 @@ function DashboardContent(){
         throw new Error('User authentication required');
       }
 
-      console.log('Dashboard: Making API request', { 
-        endpoint: API_ENDPOINTS.DASHBOARD_SUMMARY, 
-        hasToken: !!session.access_token 
-      });
-
       const response = await fetch(API_ENDPOINTS.DASHBOARD_SUMMARY, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -55,7 +50,6 @@ function DashboardContent(){
       }
 
       const data = await response.json();
-      console.log('Dashboard API data:', data);
 
       return {
         study_today: data.study_today,

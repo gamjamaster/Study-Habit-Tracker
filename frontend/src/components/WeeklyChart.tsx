@@ -21,7 +21,6 @@ export default function WeeklyChart({ token }: WeeklyChartProps) {
   // function to load the weekly data from backend
   const fetchWeeklyData = useCallback(async() => {
     if (!token) {
-      console.log('WeeklyChart: No token provided');
       return;
     }
 
