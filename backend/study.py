@@ -33,7 +33,25 @@ def read_subjects(
 
     return subjects
 
-# 2. Create new subject
+# 2. Get single subject
+@router.get("/subjects/{subject_id}", response_model=schemas.Subject)
+def read_subject(
+    subject_id: int,
+    user_id: str = Depends(get_current_user),  # add JWT authentication
+    db: Session = Depends(get_db)
+):
+    """Reads a specific subject for current user only"""
+    subject = db.query(Subject).filter(
+        Subject.id == subject_id,
+        Subject.user_id == user_id  # ensure user owns this subject
+    ).first()
+
+    if not subject:
+        raise HTTPException(status_code=404, detail="Subject not found or access denied")
+
+    return subject
+
+# 3. Create new subject
 @router.post("/subjects", response_model=schemas.Subject)
 def create_subject(
     subject: schemas.SubjectCreate, 
@@ -51,7 +69,7 @@ def create_subject(
     db.refresh(db_subject)
     return db_subject
 
-# 3. Get all study sessions
+# 4. Get all study sessions
 @router.get("/study-sessions", response_model=List[schemas.StudySessionResponse])
 def read_study_sessions(
     user_id: str = Depends(get_current_user),  # add JWT authentication
@@ -73,7 +91,7 @@ def read_study_sessions(
 
     return study_sessions
 
-# 4. Create new study session
+# 5. Create new study session
 @router.post("/study-sessions", response_model=schemas.StudySessionResponse)
 def create_study_session(
     study_session: schemas.StudySessionCreate, 
@@ -104,7 +122,7 @@ def create_study_session(
     cache_manager.delete(dashboard_cache_key)
     return db_study_session
 
-# 5. Delete subject
+# 6. Delete subject
 @router.delete("/subjects/{subject_id}")
 def delete_subject(
     subject_id: int, 
@@ -123,7 +141,7 @@ def delete_subject(
     db.commit()
     return {"message": "Subject deleted successfully"}
 
-# 6. Update subject
+# 7. Update subject
 @router.put("/subjects/{subject_id}", response_model=schemas.Subject)
 def update_subject(
     subject_id: int, 
@@ -148,7 +166,8 @@ def update_subject(
     db.commit()
     db.refresh(subject)
     return subject
-# 7. Delete study session
+
+# 8. Delete study session
 @router.delete("/study-sessions/{session_id}") # session id parameter on the URL path
 def delete_study_session(
     session_id: int, 
