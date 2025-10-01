@@ -106,6 +106,11 @@ def update_habit(
         habit.description = habit_update.description
     db.commit()
     db.refresh(habit)
+
+    # Invalidate cache when data changes
+    cache_key = cache_manager.get_cache_key(user_id, "habits")
+    cache_manager.delete(cache_key)
+
     return habit
 
 # 5. delete a habit
@@ -229,6 +234,11 @@ def delete_habit_log(
     
     db.delete(log)
     db.commit()
+
+    # Invalidate cache when data changes (dashboard summary)
+    dashboard_cache_key = cache_manager.get_cache_key(user_id, "dashboard_summary")
+    cache_manager.delete(dashboard_cache_key)
+
     return {"message": f"Habit log {log_id} has been deleted."}
 
 # 10. Clean up orphaned habit logs (logs for deleted habits)

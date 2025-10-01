@@ -67,6 +67,11 @@ def create_subject(
     db.add(db_subject)
     db.commit()
     db.refresh(db_subject)
+
+    # Invalidate cache when data changes
+    cache_key = cache_manager.get_cache_key(user_id, "subjects")
+    cache_manager.delete(cache_key)
+
     return db_subject
 
 # 4. Get all study sessions
@@ -120,6 +125,11 @@ def create_study_session(
     # Invalidate cache when data changes (also invalidate dashboard summary)
     dashboard_cache_key = cache_manager.get_cache_key(user_id, "dashboard_summary")
     cache_manager.delete(dashboard_cache_key)
+
+    # Also invalidate study sessions cache
+    study_sessions_cache_key = cache_manager.get_cache_key(user_id, "study_sessions")
+    cache_manager.delete(study_sessions_cache_key)
+
     return db_study_session
 
 # 6. Delete subject
@@ -139,6 +149,11 @@ def delete_subject(
 
     db.delete(subject)
     db.commit()
+
+    # Invalidate cache when data changes
+    cache_key = cache_manager.get_cache_key(user_id, "subjects")
+    cache_manager.delete(cache_key)
+
     return {"message": "Subject deleted successfully"}
 
 # 7. Update subject
@@ -165,6 +180,11 @@ def update_subject(
 
     db.commit()
     db.refresh(subject)
+
+    # Invalidate cache when data changes
+    cache_key = cache_manager.get_cache_key(user_id, "subjects")
+    cache_manager.delete(cache_key)
+
     return subject
 
 # 8. Delete study session
@@ -184,4 +204,13 @@ def delete_study_session(
     
     db.delete(study_session) # delete from the database
     db.commit() # keep the change
+
+    # Invalidate cache when data changes (also invalidate dashboard summary)
+    dashboard_cache_key = cache_manager.get_cache_key(user_id, "dashboard_summary")
+    cache_manager.delete(dashboard_cache_key)
+
+    # Also invalidate study sessions cache
+    study_sessions_cache_key = cache_manager.get_cache_key(user_id, "study_sessions")
+    cache_manager.delete(study_sessions_cache_key)
+
     return {"message": "Study session deleted successfully"} # return the success message
