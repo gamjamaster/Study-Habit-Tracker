@@ -49,9 +49,16 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware, # CORS => web browser security protocol
-    allow_origins=["https://www.studyhabittrack.tech", "https://studyhabittrack.tech", "http://localhost:3000"], # explicitly allow these origins
+    allow_origins=[
+        "https://www.studyhabittrack.tech",
+        "https://studyhabittrack.tech",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001"
+    ], # explicitly allow these origins
     allow_credentials = True, # allows request for credentials (cookies, authorization header and ...)
-    allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"], # explicitly allow OPTIONS
+    allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"], # explicitly allow all necessary methods
     allow_headers = ["*"], # allows every header
 )
 
