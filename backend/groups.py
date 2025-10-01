@@ -338,31 +338,28 @@ def update_group(
     db.refresh(group)
     return group
 
-# 8. Delete group (admin only)
+# 8. Delete group (creator only)
 @router.delete("/groups/{group_id}")
 def delete_group(
     group_id: int,
     user_id: str = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Deletes a study group (admin only)"""
-    # Check if user is admin of the group
-    membership = db.query(GroupMembership).filter(
-        and_(
-            GroupMembership.group_id == group_id,
-            GroupMembership.user_id == user_id,
-            GroupMembership.role == "admin"
-        )
+    """Deletes a study group (creator only)"""
+    # Check if user is the creator of the group
+    group = db.query(StudyGroup).filter(
+        StudyGroup.id == group_id,
+        StudyGroup.created_by == user_id
     ).first()
 
-    if not membership:
-        raise HTTPException(status_code=403, detail="Admin access required")
+    if not group:
+        raise HTTPException(status_code=403, detail="Only the group creator can delete this group")
 
     # Delete all memberships first
     db.query(GroupMembership).filter(GroupMembership.group_id == group_id).delete()
 
     # Delete the group
-    db.query(StudyGroup).filter(StudyGroup.id == group_id).delete()
+    db.delete(group)
     db.commit()
 
     return {"message": "Group deleted successfully"}

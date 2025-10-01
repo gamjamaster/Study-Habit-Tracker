@@ -121,7 +121,42 @@ function TimerContent() {
     setIsPaused(false);
   };
 
-  const stopTimer = () => {
+  const stopTimer = async () => {
+    // Automatically save session if it's longer than 1 minute and subject is selected
+    if (time >= 60 && selectedSubject) {
+      try {
+        if (!session) {
+          alert('Please log in to save your session.');
+          return;
+        }
+
+        const response = await fetch(API_ENDPOINTS.STUDY_SESSIONS, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            subject_id: parseInt(selectedSubject),
+            duration_minutes: Math.floor(time / 60), // 초를 분으로 변환
+          }),
+        });
+
+        if (response.ok) {
+          // Show success message for automatic save
+          alert(`Study session automatically saved! (${Math.floor(time / 60)} minutes)`);
+        } else {
+          const errorData = await response.json();
+          console.error('Server error:', errorData);
+          alert('Failed to save session automatically: ' + (errorData.detail || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Error saving session automatically:', error);
+        alert('Error saving session automatically: Network error');
+      }
+    }
+
+    // Reset timer state
     setIsRunning(false);
     setIsPaused(false);
     setTime(0);

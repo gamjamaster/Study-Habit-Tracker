@@ -43,9 +43,9 @@ app = FastAPI(
     version = "1.0.0"
 ) 
 
-# HTTPS redirect - only apply in production
-if os.getenv("ENVIRONMENT") == "production":
-    app.add_middleware(HTTPSRedirectMiddleware)
+# HTTPS redirect removed - Render.com already provides HTTPS
+# if os.getenv("ENVIRONMENT") == "production":
+#     app.add_middleware(HTTPSRedirectMiddleware)
 
 app.add_middleware(
     CORSMiddleware, # CORS => web browser security protocol
@@ -55,10 +55,10 @@ app.add_middleware(
     allow_headers = ["*"], # allows every header
 )
 
-# Handle OPTIONS requests for CORS preflight
-@app.options("/{path:path}")
-async def handle_options(path: str):
-    return {"message": "OK"}
+# CORS preflight is handled automatically by CORSMiddleware
+# @app.options("/{path:path}")
+# async def handle_options(path: str):
+#     return {"message": "OK"}
 
 # ======== Profile Management API ==========
 @app.post("/profiles/", response_model=schemas.Profile)

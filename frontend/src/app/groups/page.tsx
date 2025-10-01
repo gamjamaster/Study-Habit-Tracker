@@ -266,13 +266,16 @@ function GroupsContent() {
                     Copy Invite Code
                   </button>
 
-                  <button
-                    onClick={() => deleteGroup(group.id, group.name)}
-                    className="w-full border border-red-300 hover:bg-red-50 text-red-600 px-4 py-2 rounded-lg text-center flex items-center justify-center gap-2"
-                  >
-                    <TrashIcon className="w-4 h-4" />
-                    Delete Group
-                  </button>
+                  {/* Only show delete button for group creator */}
+                  {user?.id === group.created_by && (
+                    <button
+                      onClick={() => deleteGroup(group.id, group.name)}
+                      className="w-full border border-red-300 hover:bg-red-50 text-red-600 px-4 py-2 rounded-lg text-center flex items-center justify-center gap-2"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                      Delete Group
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
