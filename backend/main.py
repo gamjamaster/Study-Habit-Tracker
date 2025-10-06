@@ -327,9 +327,10 @@ def create_study_session(
     if not subject:
         raise HTTPException(status_code = 404, detail = "Cannot find the subject or access denied")
     
-    # creating new study session object with user_id
+    # creating new study session object with user_id and subject_name
     db_session = StudySession(
         subject_id = session.subject_id,
+        subject_name = subject.name,  # store subject name to preserve it
         duration_minutes = session.duration_minutes,
         notes = session.notes,
         user_id = user_id  # connect the current user id

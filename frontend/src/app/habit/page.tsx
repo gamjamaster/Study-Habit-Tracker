@@ -290,12 +290,22 @@ function HabitContent() {
         }
       });
       
-      if (!response.ok) throw new Error("Habit deletion failed");
+      if (!response.ok) {
+        if (response.status === 404) {
+          // Habit already deleted or doesn't exist
+          console.warn(`Habit ${habitId} not found - may have been already deleted`);
+          // Still remove from UI
+          setHabits(habits.filter(h => h.id !== habitId));
+          return;
+        }
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Habit deletion failed");
+      }
       
       setHabits(habits.filter(h => h.id !== habitId));
     } catch (error) {
       console.error("Habit deletion error:", error);
-      alert("Failed to delete habit");
+      alert(error instanceof Error ? error.message : "Failed to delete habit");
     }
   };
 

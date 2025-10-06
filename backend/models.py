@@ -21,6 +21,7 @@ class StudySession(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(String, ForeignKey("profiles.id"), index=True) 
     subject_id = Column(Integer, ForeignKey("subjects.id"))
+    subject_name = Column(String, nullable=True)  # Store subject name to preserve it even after subject deletion
     start_time = Column(DateTime, nullable=True)
     end_time = Column(DateTime, nullable=True)
     duration_minutes = Column(Integer)

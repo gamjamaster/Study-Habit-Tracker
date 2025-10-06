@@ -140,6 +140,13 @@ def delete_habit(
     habit_name = habit.name
     db.delete(habit)
     db.commit()
+    
+    # Invalidate cache when data changes
+    cache_key = cache_manager.get_cache_key(user_id, "habits")
+    cache_manager.delete(cache_key)
+    dashboard_cache_key = cache_manager.get_cache_key(user_id, "dashboard_summary")
+    cache_manager.delete(dashboard_cache_key)
+    
     return {"message": f"'{habit_name}' habit and all related logs have been deleted."}
 
 # 6. add habit check logs

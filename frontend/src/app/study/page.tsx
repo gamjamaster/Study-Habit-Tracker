@@ -17,6 +17,7 @@ interface Subject {
 interface StudyLog {
   id: number;
   subject_id: number;
+  subject_name?: string;  // preserved subject name
   duration_minutes: number;
   notes?: string;
   created_at: string;
@@ -281,7 +282,7 @@ function StudyContent() {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <span className="font-semibold text-blue-800 text-lg">
-                          {subjects.find(s => s.id === log.subject_id)?.name || "Unknown Subject"}
+                          {log.subject_name || subjects.find(s => s.id === log.subject_id)?.name || "Unknown Subject"}
                         </span>
                         <span className="bg-blue-200 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
                           {log.duration_minutes} min
