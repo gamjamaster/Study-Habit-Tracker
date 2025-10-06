@@ -103,6 +103,7 @@ function StudyContent() {
   const [logs, setLogs] = useState<StudyLog[]>([]);
   const [newLog, setNewLog] = useState({ subject_id: "", minutes: "", note: "" });
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false); // Prevent double-click
 
   // fetch subjects and study log when loading the page
   useEffect(() => {
@@ -153,6 +154,9 @@ function StudyContent() {
       return;
     }
 
+    if (isSaving) return; // Prevent double-click
+
+    setIsSaving(true);
     try {
       const payload = {
         subject_id: Number(newLog.subject_id),
@@ -182,6 +186,8 @@ function StudyContent() {
     } catch (error) {
       console.error("❌ Network error:", error);
       alert("Network error occurred. Please check your connection.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -223,14 +229,14 @@ function StudyContent() {
       </div>
     );
   return (
-    <div className="py-8">
-      <div className="max-w-4xl mx-auto p-4">
+    <div className="py-4 sm:py-6 lg:py-8">
+      <div className="max-w-4xl mx-auto">
         {/* page title */}
-        <h1 className="text-3xl font-bold mb-8 text-gray-900 text-center">📚 Study Tracker</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-gray-900 text-center">📚 Study Tracker</h1>
         
         {/* study log addition card */}
-        <div className="bg-white rounded-xl shadow p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4 text-gray-700 flex items-center">
+        <div className="bg-white rounded-xl shadow p-4 sm:p-6 mb-6">
+          <h2 className="text-base sm:text-lg font-semibold mb-4 text-gray-700 flex items-center">
             <PlusIcon className="w-5 h-5 mr-2 text-blue-500" />
             Add Study Session
           </h2>
@@ -260,10 +266,11 @@ function StudyContent() {
               onChange={e => setNewLog({ ...newLog, note: e.target.value })}
             />
             <button 
-              className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-6 py-3 flex items-center justify-center font-medium transition-colors sm:col-span-2 lg:col-span-1"
+              className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-6 py-3 flex items-center justify-center font-medium transition-colors sm:col-span-2 lg:col-span-1 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={addLog}
+              disabled={isSaving}
             >
-              <PlusIcon className="w-5 h-5 mr-2" /> Add Session
+              <PlusIcon className="w-5 h-5 mr-2" /> {isSaving ? 'Adding...' : 'Add Session'}
             </button>
           </div>
         </div>

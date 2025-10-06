@@ -40,6 +40,8 @@ function HabitContent() {
   const [loading, setLoading] = useState(true);
   // Error state
   const [error, setError] = useState<string | null>(null);
+  // Adding habit state (prevent double-click)
+  const [isAdding, setIsAdding] = useState(false);
 
   // Check if habit is completed today - helper function
   const checkTodayCompletion = useCallback(async (habitId: number): Promise<boolean> => {
@@ -250,7 +252,9 @@ function HabitContent() {
   // Add new habit
   const addHabit = async () => {
     if (!newHabit.trim()) return;
+    if (isAdding) return; // Prevent double-click
     
+    setIsAdding(true);
     try {
       const response = await fetch(API_ENDPOINTS.HABITS, {
         method: "POST",
@@ -274,6 +278,8 @@ function HabitContent() {
     } catch (error) {
       console.error("Habit addition error:", error);
       alert("Failed to add habit");
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -333,28 +339,29 @@ function HabitContent() {
   }
 
   return (
-    <div className="py-8">
-      <div className="max-w-2xl mx-auto p-4">
+    <div className="py-4 sm:py-6 lg:py-8">
+      <div className="max-w-2xl mx-auto">
         {/* page title */}
-        <h1 className="text-3xl font-bold mb-8 text-gray-900 text-center">✅ My Habits</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-gray-900 text-center">✅ My Habits</h1>
         
         {/* habit addition card */}
         <div className="bg-white rounded-xl shadow p-4 sm:p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4 text-gray-700">Add New Habit</h2>
+          <h2 className="text-base sm:text-lg font-semibold mb-4 text-gray-700">Add New Habit</h2>
           <div className="flex flex-col sm:flex-row gap-3">
             <input
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-sm sm:text-base"
+              className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-sm sm:text-base"
               placeholder="Enter a new habit (e.g., Exercise, Reading)"
               value={newHabit}
               onChange={e => setNewHabit(e.target.value)}
               onKeyDown={e => e.key === "Enter" && addHabit()}
             />
             <button
-              className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-6 py-3 flex items-center justify-center font-medium transition-colors"
+              className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-6 py-3 flex items-center justify-center font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={addHabit}
+              disabled={isAdding}
             >
               <PlusIcon className="w-5 h-5 sm:mr-2" /> 
-              <span className="hidden sm:inline">Add</span>
+              <span className="hidden sm:inline">{isAdding ? 'Adding...' : 'Add'}</span>
             </button>
           </div>
         </div>
@@ -374,25 +381,31 @@ function HabitContent() {
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
                       <input
                         type="checkbox"
                         checked={habit.done}
                         onChange={() => toggleHabits(habit.id)}
-                        className="w-6 h-6 accent-green-500 cursor-pointer"
+                        className="w-6 h-6 accent-green-500 cursor-pointer flex-shrink-0"
+                        id={`habit-${habit.id}`}
                       />
-                      <span className={`font-medium text-lg ${
-                        habit.done ? "text-green-700 line-through" : "text-gray-800"
-                      }`}>
+                      <label
+                        htmlFor={`habit-${habit.id}`}
+                        className={`font-medium text-base sm:text-lg cursor-pointer truncate ${
+                          habit.done ? "text-green-700 line-through" : "text-gray-800"
+                        }`}
+                        title={habit.name}
+                      >
                         {habit.name}
-                      </span>
+                      </label>
                       {habit.done && (
-                        <span className="text-green-600 text-sm font-medium">✅ Completed</span>
+                        <span className="hidden sm:inline text-green-600 text-sm font-medium flex-shrink-0">✅ Completed</span>
                       )}
                     </div>
                     <button
-                      className="p-2 rounded-lg hover:bg-red-100 transition-colors"
+                      className="p-3 sm:p-2 rounded-lg hover:bg-red-100 transition-colors flex-shrink-0"
                       onClick={() => removeHabit(habit.id)}
+                      aria-label={`Delete ${habit.name}`}
                       title="Delete habit"
                     >
                       <TrashIcon className="w-5 h-5 text-red-400" />

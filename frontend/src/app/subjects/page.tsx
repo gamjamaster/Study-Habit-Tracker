@@ -157,19 +157,19 @@ function SubjectsContent() {
 
     // main JSX return statement for rendering the page
     return (
-        // main container with full screen height, light gray background, and padding
-        <div className="min-h-screen bg-gray-50 p-6">
+        // main container with full screen height, light gray background, and responsive padding
+        <div className="min-h-screen bg-gray-50 py-4 sm:py-6">
             {/* centered container with maximum width and auto horizontal margins */}
             <div className="max-w-4xl mx-auto">
                 
-                {/* page header section with title and add button */}
-                <div className="flex justify-between items-center mb-8">
+                {/* page header section with title and add button - responsive layout */}
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8">
                     {/* left side of header with title and description */}
                     <div>
-                        {/* main page title with large font and bold weight */}
-                        <h1 className="text-3xl font-bold text-gray-900">Subject Management</h1>
+                        {/* main page title with responsive font size and bold weight */}
+                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Subject Management</h1>
                         {/* subtitle description with smaller gray text */}
-                        <p className="text-gray-600 mt-2">Add and manage your subjects</p>
+                        <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">Add and manage your subjects</p>
                     </div>
                     {/* button to toggle subject creation form visibility */}
                     <button
@@ -177,7 +177,7 @@ function SubjectsContent() {
                             setEditingSubject(null); // clear editing state
                             setShowForm(!showForm); // toggle showForm state when clicked
                         }}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-colors w-full sm:w-auto"
                     >
                         {/* conditional text based on form visibility state */}
                         {showForm ? "Cancel" : "Add New Subject"}

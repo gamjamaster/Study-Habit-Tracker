@@ -44,45 +44,47 @@ function CalendarContent() {
   return (
     // wraps the entire calendar section
     <section>
-      {/* calendar title and view toggles */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Calendar</h1>
+      {/* calendar title and view toggles - responsive layout */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Calendar</h1>
         
         {/* View mode toggle buttons */}
         <div className="flex gap-2">
           <button
             onClick={() => setViewMode("calendar")}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors ${
               viewMode === "calendar"
                 ? "bg-blue-600 text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
-            📅 Calendar View
+            <span className="hidden sm:inline">📅 Calendar View</span>
+            <span className="sm:hidden">📅 Calendar</span>
           </button>
           <button
             onClick={() => setViewMode("heatmap")}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors ${
               viewMode === "heatmap"
                 ? "bg-green-600 text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
-            🔥 Heatmap View
+            <span className="hidden sm:inline">🔥 Heatmap View</span>
+            <span className="sm:hidden">🔥 Heatmap</span>
           </button>
         </div>
       </div>
 
-      {/* Additional controls for heatmap view */}
+      {/* Additional controls for heatmap view - mobile friendly */}
       {viewMode === "heatmap" && (
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between gap-3 sm:gap-4 mb-4">
           {/* Year selection */}
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">Year:</label>
+            <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Year:</label>
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="flex-1 sm:flex-none px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
             >
               {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(year => (
                 <option key={year} value={year}>{year}</option>

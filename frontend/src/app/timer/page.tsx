@@ -19,6 +19,7 @@ function TimerContent() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedSubject, setSelectedSubject] = useState('');
   const [saving, setSaving] = useState(false);
+  const [isStopping, setIsStopping] = useState(false); // Prevent double-click on Stop
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load timer state from localStorage on component mount
@@ -122,9 +123,12 @@ function TimerContent() {
   };
 
   const stopTimer = async () => {
-    // Automatically save session if it's longer than 1 minute and subject is selected
-    if (time >= 60 && selectedSubject) {
-      try {
+    if (isStopping) return; // Prevent double-click
+
+    setIsStopping(true);
+    try {
+      // Automatically save session if it's longer than 1 minute and subject is selected
+      if (time >= 60 && selectedSubject) {
         if (!session) {
           alert('Please log in to save your session.');
           return;
@@ -150,19 +154,21 @@ function TimerContent() {
           console.error('Server error:', errorData);
           alert('Failed to save session automatically: ' + (errorData.detail || 'Unknown error'));
         }
-      } catch (error) {
-        console.error('Error saving session automatically:', error);
-        alert('Error saving session automatically: Network error');
       }
-    }
 
-    // Reset timer state
-    setIsRunning(false);
-    setIsPaused(false);
-    setTime(0);
-    setSelectedSubject('');
-    // Clear timer state from localStorage when stopped
-    localStorage.removeItem('timerState');
+      // Reset timer state
+      setIsRunning(false);
+      setIsPaused(false);
+      setTime(0);
+      setSelectedSubject('');
+      // Clear timer state from localStorage when stopped
+      localStorage.removeItem('timerState');
+    } catch (error) {
+      console.error('Error in stopTimer:', error);
+      alert('Error stopping timer: Network error');
+    } finally {
+      setIsStopping(false);
+    }
   };
 
   const saveSession = async () => {
@@ -368,10 +374,11 @@ function TimerContent() {
               )}
               <button
                 onClick={stopTimer}
-                className="group flex items-center px-4 sm:px-6 py-2 sm:py-3 bg-red-500 hover:bg-red-600 text-white rounded-full font-bold text-sm sm:text-base transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
+                disabled={isStopping}
+                className="group flex items-center px-4 sm:px-6 py-2 sm:py-3 bg-red-500 hover:bg-red-600 text-white rounded-full font-bold text-sm sm:text-base transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 <StopIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 group-hover:scale-110 transition-transform" />
-                <span className="hidden sm:inline">STOP</span>
+                <span className="hidden sm:inline">{isStopping ? 'STOPPING...' : 'STOP'}</span>
               </button>
             </>
           )}

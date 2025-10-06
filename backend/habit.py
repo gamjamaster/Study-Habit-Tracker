@@ -52,6 +52,16 @@ def create_habit(
     db: Session = Depends(get_db)
 ):
     """Creates new habit"""
+    # Check if habit with same name already exists for this user
+    existing_habit = db.query(Habit).filter(
+        Habit.user_id == user_id,
+        Habit.name == habit.name
+    ).first()
+    
+    if existing_habit:
+        # Return existing habit instead of creating duplicate
+        return existing_habit
+    
     db_habit = Habit( # creates a new habit object
         name=habit.name,
         user_id=user_id,  # connect user ID to the habit
@@ -66,6 +76,9 @@ def create_habit(
     # Invalidate cache when data changes
     cache_key = cache_manager.get_cache_key(user_id, "habits")
     cache_manager.delete(cache_key)
+    # Also invalidate dashboard cache since habit count changed
+    dashboard_cache_key = cache_manager.get_cache_key(user_id, "dashboard_summary")
+    cache_manager.delete(dashboard_cache_key)
 
     return db_habit
 

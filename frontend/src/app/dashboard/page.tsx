@@ -78,16 +78,16 @@ function DashboardContent(){
   if(!summary) return null;
 
   return (
-    <div className="py-4 lg:py-8">
-      <div className="max-w-4xl mx-auto p-2 sm:p-4">
-        <div className="flex items-center justify-center gap-4 mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+    <div className="py-4 sm:py-6 lg:py-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 text-center sm:text-left">
             {user?.user_metadata?.full_name || user?.email}&apos;s Dashboard
           </h1>
           <button
             onClick={handleRefresh}
             disabled={isLoading}
-            className="px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+            className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-xs sm:text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 mx-auto sm:mx-0"
             title="Refresh dashboard data"
           >
             🔄 {isLoading ? 'Loading...' : 'Refresh'}
