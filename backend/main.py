@@ -38,8 +38,8 @@ def get_date_format_func():
 
 #main object of the web api server
 app = FastAPI(
-    title = "Study Habit Tracker",
-    description = "API that Tracks and analyzes study habits",
+    title = "StudyFlow API",
+    description = "API that tracks and analyzes study habits and lifestyle routines",
     version = "1.0.0"
 ) 
 
@@ -172,7 +172,7 @@ def startup_event():
 @app.get("/") # if the root directory(backend) receives get request,
 def read_root(): # execute this function
     return{
-        "message": "Welcome to Study Habit Tracker API!",
+        "message": "Welcome to StudyFlow API!",
         "version": "1.0.0",
         "docs": "/docs"
     } # welcome message in JSON format

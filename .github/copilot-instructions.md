@@ -1,4 +1,4 @@
-# 📚 Study & Lifestyle Habit Tracker – Integrated Development Guide
+# 📚 StudyFlow – Integrated Development Guide
 
 ## Number 1 Rule - VERY IMPORTANT
 - Do not modify the code yourself. Just show the code to me so that I can learn the codes by entering them in the codebases.
@@ -70,7 +70,7 @@ This project is a **full-stack learning + lifestyle habit management platform** 
 ## 📂 Suggested Folder Structure
 
 ```
-study-habit-tracker/
+studyflow/
 │
 ├── backend/
 │   ├── main.py

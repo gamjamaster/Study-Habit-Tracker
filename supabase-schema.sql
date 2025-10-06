@@ -1,5 +1,6 @@
 -- ===============================================
--- Study Habit Tracker - Supabase Database Schema
+-- StudyFlow - Supabase Database Schema
+-- This schema includes user authentication and data isolation
 -- ===============================================
 -- Execute this SQL in Supabase SQL Editor
 -- Settings > SQL Editor > New Query

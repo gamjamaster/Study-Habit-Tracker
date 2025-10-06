@@ -44,7 +44,7 @@ export default function Sidebar() {
     <>
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 bg-gray-900 text-white px-4 py-3 flex items-center justify-between z-30">
-        <h1 className="text-xl font-bold">MyRoutine</h1>
+        <h1 className="text-xl font-bold">StudyFlow</h1>
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="p-2 rounded-lg hover:bg-gray-800"
@@ -74,7 +74,7 @@ export default function Sidebar() {
       `}>
         {/* Logo */}
         <div className="text-2xl font-bold mb-10 select-none tracking-tight px-2">
-          Study Habit
+          StudyFlow
         </div>
         
         {/* Navigation */}
