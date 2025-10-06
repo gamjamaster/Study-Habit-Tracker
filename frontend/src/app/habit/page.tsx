@@ -5,6 +5,7 @@ import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { API_ENDPOINTS } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";  // import authentication context
 import ProtectedRoute from "@/components/ProtectedRoute";  // import protected route component
+import { useQueryClient } from "@tanstack/react-query";  // import React Query client for cache invalidation
 
 // Habit interface definition
 interface Habit {
@@ -30,6 +31,7 @@ interface HabitLog {
 
 function HabitContent() {
   const { user, session } = useAuth(); // get authentication state
+  const queryClient = useQueryClient(); // get React Query client for cache invalidation
   // Habit state management
   const [habits, setHabits] = useState<HabitWithStatus[]>([]);
   // New habit input value
@@ -151,6 +153,9 @@ function HabitContent() {
         // Check: create today's log
         await createTodayLog(habitId);
       }
+
+      // Invalidate dashboard cache to refresh habit statistics
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
     } catch (error) {
       console.error("Habit toggle error:", error);
       

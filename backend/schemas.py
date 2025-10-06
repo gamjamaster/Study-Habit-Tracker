@@ -36,7 +36,7 @@ class StudySessionUpdate(BaseModel): # data format to update existing study sess
 
 class StudySession(BaseModel): # data to send when the API responds
     id: int # unique id of the study session
-    subject_id: int # unique id of the subject
+    subject_id: Optional[int] = None # unique id of the subject (nullable for old data)
     duration_minutes: int # study time
     notes: Optional[str] # notes
     created_at: datetime # date and time at which the study session has been recorded
@@ -47,7 +47,7 @@ class StudySession(BaseModel): # data to send when the API responds
 # Simplified study session schema for API responses (without nested subject)
 class StudySessionResponse(BaseModel):
     id: int
-    subject_id: int
+    subject_id: Optional[int] = None  # nullable for old data
     duration_minutes: int
     notes: Optional[str]
     created_at: datetime
