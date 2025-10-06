@@ -232,7 +232,7 @@ function TimerContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex flex-col items-center justify-center p-4 lg:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex flex-col items-center justify-center px-4 sm:px-6 py-4 lg:py-8">
       {/* Main Timer Circle */}
       <div className="relative mb-6 sm:mb-8">
         {/* Outer Ring */}
