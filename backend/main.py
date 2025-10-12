@@ -607,7 +607,15 @@ def get_habit_completion_stats(
             "weekday_completion": [
                 {
                     "weekday": int(stat.weekday),
-                    "weekday_name": calendar.day_name[int(stat.weekday)],
+                    "weekday_name": {
+                        0: "Sunday",
+                        1: "Monday", 
+                        2: "Tuesday",
+                        3: "Wednesday",
+                        4: "Thursday",
+                        5: "Friday",
+                        6: "Saturday"
+                    }.get(int(stat.weekday), "Unknown"),
                     "completion_count": stat.completion_count
                 }
                 for stat in weekday_completion
@@ -622,6 +630,9 @@ def get_habit_completion_stats(
         }
 
     except Exception as e:
+        import traceback
+        print(f"Error in habit-completion: {str(e)}")
+        print(traceback.format_exc())
         raise HTTPException(status_code = 500, detail = str(e))
     
 @app.get("/analytics/correlation")
