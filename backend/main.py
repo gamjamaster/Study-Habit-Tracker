@@ -447,40 +447,26 @@ def get_study_statistics(
     """Returns weekly/monthly study statistics"""
     try:
         now = datetime.now()
-
-        if period == "week":
-            # data for the past 7 days
-            start_date = now - timedelta(days = 7)
-            date_func = get_date_format_func()
-
-            # daily study time for current user only
-            daily_stats = db.query(
-                date_func(StudySession.created_at, '%Y-%m-%d').label('date'),
-                func.sum(StudySession.duration_minutes).label('total_minutes'),
-                func.count(StudySession.id).label('session_count')
-            ).filter(
-                StudySession.created_at >= start_date,
-                StudySession.user_id == user_id  # add user filtering
-            ).group_by(
-                date_func(StudySession.created_at, '%Y-%m-%d')
-            ).all()
         
-        elif period == "month":
-            # data for the past 30 days
+        # Determine start_date based on period
+        if period == "month":
             start_date = now - timedelta(days = 30)
-            date_func = get_date_format_func()
+        else:  # default to week
+            start_date = now - timedelta(days = 7)
+        
+        date_func = get_date_format_func()
 
-            # daily study time for current user only
-            daily_stats = db.query(
-                date_func(StudySession.created_at, '%Y-%m-%d').label('date'),
-                func.sum(StudySession.duration_minutes).label('total_minutes'),
-                func.count(StudySession.id).label('session_count')
-            ).filter(
-                StudySession.created_at >= start_date,
-                StudySession.user_id == user_id  # add user filtering
-            ).group_by(
-                date_func(StudySession.created_at, '%Y-%m-%d')
-            ).all()
+        # daily study time for current user only
+        daily_stats = db.query(
+            date_func(StudySession.created_at, '%Y-%m-%d').label('date'),
+            func.sum(StudySession.duration_minutes).label('total_minutes'),
+            func.count(StudySession.id).label('session_count')
+        ).filter(
+            StudySession.created_at >= start_date,
+            StudySession.user_id == user_id  # add user filtering
+        ).group_by(
+            date_func(StudySession.created_at, '%Y-%m-%d')
+        ).all()
 
         # stats per subject for current user only
         subject_stats = db.query(
@@ -601,7 +587,7 @@ def get_habit_completion_stats(
         # completion rate by habit for current user only
         habit_stats = db.query(
             Habit.name,
-            func.count(func.distinct(HabitLog.habit_id)).label('completion_count')
+            func.count(HabitLog.id).label('completion_count')
         ).join(HabitLog).filter(
             Habit.user_id == user_id,  # filter by user_id
             HabitLog.completed_date >= start_date

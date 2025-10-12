@@ -293,8 +293,6 @@ function SubjectsContent() {
                                             {/* subject name with bold styling */}
                                             <h3 className="font-semibold text-lg text-gray-900">{subject.name}</h3>
                                         </div>
-                                        {/* right side: subject ID number */}
-                                        <span className="text-sm text-gray-500">#{subject.id}</span>
                                     </div>
 
                                     {/* subject creation date */}
