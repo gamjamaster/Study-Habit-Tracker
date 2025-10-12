@@ -90,16 +90,22 @@ function PersonalDataContent() {
       if (studyResponse.ok) {
         const studyData = await studyResponse.json();
         setStudyStats(studyData);
+      } else {
+        console.error('Study stats API failed:', studyResponse.status);
       }
 
       if (habitResponse.ok) {
         const habitData = await habitResponse.json();
         setHabitStats(habitData);
+      } else {
+        console.error('Habit completion API failed:', habitResponse.status);
       }
 
       if (correlationResponse.ok) {
         const corrData = await correlationResponse.json();
         setCorrelationData(corrData);
+      } else {
+        console.error('Correlation API failed:', correlationResponse.status);
       }
     } catch (error) {
       console.error('Error fetching analytics data:', error);
