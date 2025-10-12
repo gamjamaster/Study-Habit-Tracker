@@ -20,7 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <Sidebar />
           {/* Main content area with responsive margins for sidebar */}
-          <main className="lg:ml-60 min-h-screen pt-16 lg:pt-0">
+          <main className="min-h-screen pt-16 lg:pt-0">
             {children}
           </main>
         </Providers>

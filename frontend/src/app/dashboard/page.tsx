@@ -78,8 +78,8 @@ function DashboardContent(){
   if(!summary) return null;
 
   return (
-    <div className="py-4 sm:py-6 lg:py-8 px-4 sm:px-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="py-4 sm:py-6 lg:py-8 lg:-ml-60 lg:pl-60">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center gap-3 sm:gap-4 mb-6 sm:mb-8">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 text-center sm:text-left">
             {user?.user_metadata?.full_name || user?.email}&apos;s Dashboard

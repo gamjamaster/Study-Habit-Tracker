@@ -43,7 +43,8 @@ function CalendarContent() {
 
   return (
     // wraps the entire calendar section
-    <section className="px-4 sm:px-6 py-4 sm:py-6">
+    <section className="py-4 sm:py-6 lg:-ml-60 lg:pl-60">
+      <div className="px-4 sm:px-6">
       {/* calendar title and view toggles - responsive layout */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Calendar</h1>
@@ -160,6 +161,7 @@ function CalendarContent() {
             </ul>
           </div>
         </div>
+      </div>
       </div>
     </section>
   );

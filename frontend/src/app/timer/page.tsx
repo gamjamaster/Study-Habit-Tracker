@@ -232,11 +232,12 @@ function TimerContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex flex-col items-center justify-center px-4 sm:px-6 py-4 lg:py-8">
-      {/* Main Timer Circle */}
-      <div className="relative mb-6 sm:mb-8">
-        {/* Outer Ring */}
-        <div className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 lg:w-[280px] lg:h-[280px] rounded-full border-2 sm:border-[3px] border-gray-700 bg-gradient-to-br from-gray-800 to-black shadow-2xl relative">
+    <div className="fixed inset-0 lg:left-60 bg-gradient-to-br from-gray-900 to-black flex items-center justify-center px-4 py-8">
+      <div className="flex flex-col items-center">
+        {/* Main Timer Circle */}
+        <div className="relative mb-6 sm:mb-8">
+          {/* Outer Ring */}
+          <div className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 lg:w-[280px] lg:h-[280px] rounded-full border-2 sm:border-[3px] border-gray-700 bg-gradient-to-br from-gray-800 to-black shadow-2xl relative">
           
           {/* Time Display */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -396,6 +397,7 @@ function TimerContent() {
             </button>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

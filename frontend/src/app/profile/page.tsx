@@ -87,8 +87,9 @@ export default function ProfilePage(){
     }
 
     return(
-        <div className = "min-h-screen bg-gray-50">
-            <div className = "px-4 sm:px-6 py-4 sm:py-6 lg:py-8">
+        <div className = "min-h-screen bg-gray-50 lg:-ml-60 lg:pl-60">
+            <div className = "py-4 sm:py-6 lg:py-8">
+                <div className="max-w-4xl mx-auto px-4 sm:px-6">
                 {/* header */}
                 <div className = "mb-8">
                     <div className = "flex items-center gap-4 mb-4">
@@ -241,6 +242,7 @@ export default function ProfilePage(){
               </button>
             </form>
           </div>
+        </div>
         </div>
       </div>
     </div>

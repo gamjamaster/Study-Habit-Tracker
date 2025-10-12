@@ -147,7 +147,8 @@ function GroupsContent() {
   }
 
   return (
-    <div className="py-4 sm:py-6 lg:py-8 px-4 sm:px-6">
+    <div className="py-4 sm:py-6 lg:py-8 lg:-ml-60 lg:pl-60">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -296,6 +297,7 @@ function GroupsContent() {
             Join Group
           </Link>
         </div>
+      </div>
       </div>
     </div>
   );

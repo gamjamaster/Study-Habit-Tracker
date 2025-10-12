@@ -339,8 +339,8 @@ function HabitContent() {
   }
 
   return (
-    <div className="py-4 sm:py-6 lg:py-8 px-4 sm:px-6">
-      <div className="max-w-2xl mx-auto">
+    <div className="py-4 sm:py-6 lg:py-8 lg:-ml-60 lg:pl-60">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6">
         {/* page title */}
         <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-gray-900 text-center">✅ My Habits</h1>
         
