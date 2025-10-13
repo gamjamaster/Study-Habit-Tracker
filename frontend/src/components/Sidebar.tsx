@@ -2,7 +2,7 @@
 
 import Link from "next/link"; // link component for page redirection
 import { usePathname } from "next/navigation"; // hook to know the current path
-import { useState } from "react"; // React state hook
+import { useState, useEffect } from "react"; // React state hook
 import { useRouter } from "next/navigation"; // Add router import
 import { useAuth } from "@/contexts/AuthContext"; // import auth context
 import { useTimer } from "@/contexts/TimerContext"; // import timer context
@@ -37,10 +37,21 @@ const navItems = [
 // make a responsive sidebar component
 export default function Sidebar() {
   const { user, signOut } = useAuth();
-  const { time, isRunning } = useTimer();
+  const { getTime, isRunning } = useTimer();
   const pathname = usePathname(); // store the directory of the current page in the pathname variable
   const router = useRouter(); // Add router hook
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // mobile menu state
+  const [, forceUpdate] = useState(0);
+
+  // Sidebar에서만 1초마다 업데이트 (다른 컴포넌트에 영향 없음)
+  useEffect(() => {
+    if (isRunning) {
+      const interval = setInterval(() => {
+        forceUpdate(prev => prev + 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [isRunning]);
 
   // Format time for display
   const formatTime = (seconds: number) => {
@@ -112,7 +123,7 @@ export default function Sidebar() {
               {item.name === "Timer" && isRunning && (
                 <span className="ml-auto flex items-center gap-2">
                   <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                  <span className="text-xs font-mono">{formatTime(time)}</span>
+                  <span className="text-xs font-mono">{formatTime(getTime())}</span>
                 </span>
               )}
             </Link>

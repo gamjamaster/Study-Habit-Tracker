@@ -1,9 +1,9 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, ReactNode, useCallback, useMemo } from 'react';
 
 interface TimerContextType {
-  time: number;
+  getTime: () => number; // 함수로 변경하여 불필요한 리렌더링 방지
   isRunning: boolean;
   isPaused: boolean;
   selectedSubject: string;
@@ -12,16 +12,17 @@ interface TimerContextType {
   stopTimer: () => void;
   setSelectedSubject: (subject: string) => void;
   resetTimer: () => void;
+  startTimestamp: number | null;
 }
 
 const TimerContext = createContext<TimerContextType | undefined>(undefined);
 
 export function TimerProvider({ children }: { children: ReactNode }) {
-  const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState('');
-  const [startTimestamp, setStartTimestamp] = useState<number | null>(null); // Track when timer started
+  const [startTimestamp, setStartTimestamp] = useState<number | null>(null);
+  const [, setForceUpdate] = useState(0); // Sidebar 업데이트용
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load timer state from localStorage on mount
@@ -30,53 +31,47 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     if (savedTimerState) {
       try {
         const { 
-          time: savedTime, 
           isRunning: savedIsRunning, 
           isPaused: savedIsPaused, 
           selectedSubject: savedSubject,
           startTimestamp: savedStartTimestamp
         } = JSON.parse(savedTimerState);
         
-        // Calculate actual elapsed time if timer was running
-        if (savedIsRunning && !savedIsPaused && savedStartTimestamp) {
-          const now = Date.now();
-          const totalElapsed = Math.floor((now - savedStartTimestamp) / 1000);
-          setTime(totalElapsed);
-          setStartTimestamp(savedStartTimestamp);
-        } else {
-          setTime(savedTime || 0);
-          setStartTimestamp(savedStartTimestamp || null);
-        }
-        
         setIsRunning(savedIsRunning || false);
         setIsPaused(savedIsPaused || false);
         setSelectedSubject(savedSubject || '');
+        setStartTimestamp(savedStartTimestamp || null);
       } catch (error) {
         console.error('Error loading timer state from localStorage:', error);
       }
     }
   }, []);
 
-  // Save timer state to localStorage whenever it changes
+  // Save timer state to localStorage - 중요한 변경사항만 저장
   useEffect(() => {
     const timerState = {
-      time,
       isRunning,
       isPaused,
       selectedSubject,
       startTimestamp
     };
     localStorage.setItem('timerState', JSON.stringify(timerState));
-  }, [time, isRunning, isPaused, selectedSubject, startTimestamp]);
+  }, [isRunning, isPaused, selectedSubject, startTimestamp]); // time 제거!
 
-  // Timer interval - runs in background and calculates accurate time
+  // 시간 계산 함수 - 호출할 때만 계산
+  const getTime = useCallback((): number => {
+    if (startTimestamp && isRunning && !isPaused) {
+      const now = Date.now();
+      return Math.floor((now - startTimestamp) / 1000);
+    }
+    return 0;
+  }, [startTimestamp, isRunning, isPaused]);
+
+  // Timer interval - Sidebar 업데이트용으로만 사용 (1초에 1번)
   useEffect(() => {
     if (isRunning && !isPaused && startTimestamp) {
-      // Calculate accurate time every second based on start timestamp
       intervalRef.current = setInterval(() => {
-        const now = Date.now();
-        const elapsed = Math.floor((now - startTimestamp) / 1000);
-        setTime(elapsed);
+        setForceUpdate(prev => prev + 1); // 이것만으로 Sidebar가 업데이트됨
       }, 1000);
     } else {
       if (intervalRef.current) {
@@ -92,7 +87,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     };
   }, [isRunning, isPaused, startTimestamp]);
 
-  const startTimer = () => {
+  const startTimer = useCallback(() => {
     // Only set start timestamp if timer is being started fresh
     if (!isRunning || isPaused) {
       if (!startTimestamp) {
@@ -101,40 +96,40 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     }
     setIsRunning(true);
     setIsPaused(false);
-  };
+  }, [isRunning, isPaused, startTimestamp]);
 
-  const pauseTimer = () => {
+  const pauseTimer = useCallback(() => {
     setIsPaused(true);
-  };
+  }, []);
 
-  const stopTimer = () => {
+  const stopTimer = useCallback(() => {
     setIsRunning(false);
     setIsPaused(false);
-  };
+  }, []);
 
-  const resetTimer = () => {
-    setTime(0);
+  const resetTimer = useCallback(() => {
     setIsRunning(false);
     setIsPaused(false);
     setSelectedSubject('');
     setStartTimestamp(null);
     localStorage.removeItem('timerState');
-  };
+  }, []);
+
+  const value = useMemo(() => ({
+    getTime,
+    isRunning,
+    isPaused,
+    selectedSubject,
+    startTimer,
+    pauseTimer,
+    stopTimer,
+    setSelectedSubject,
+    resetTimer,
+    startTimestamp
+  }), [getTime, isRunning, isPaused, selectedSubject, startTimestamp, startTimer, pauseTimer, stopTimer, resetTimer]);
 
   return (
-    <TimerContext.Provider
-      value={{
-        time,
-        isRunning,
-        isPaused,
-        selectedSubject,
-        startTimer,
-        pauseTimer,
-        stopTimer,
-        setSelectedSubject,
-        resetTimer
-      }}
-    >
+    <TimerContext.Provider value={value}>
       {children}
     </TimerContext.Provider>
   );

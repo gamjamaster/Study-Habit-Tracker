@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { PlayIcon, PauseIcon, StopIcon, ClockIcon } from '@heroicons/react/24/solid';
 import { API_ENDPOINTS } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,20 +15,32 @@ interface Subject {
 function TimerContent() {
   const { session } = useAuth();
   const { 
-    time, 
+    getTime,
     isRunning, 
     isPaused, 
     selectedSubject, 
     startTimer: globalStartTimer,
     pauseTimer: globalPauseTimer,
-    stopTimer: globalStopTimer,
     setSelectedSubject,
     resetTimer
   } = useTimer();
   
+  const [time, setTime] = useState(0);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [saving, setSaving] = useState(false);
-  const [isStopping, setIsStopping] = useState(false); // Prevent double-click on Stop
+  const [isStopping, setIsStopping] = useState(false);
+
+  // 타이머 페이지에서만 매 초마다 시간 업데이트
+  useEffect(() => {
+    if (isRunning && !isPaused) {
+      const interval = setInterval(() => {
+        setTime(getTime());
+      }, 100); // 100ms마다 업데이트하여 부드럽게 표시
+      return () => clearInterval(interval);
+    } else {
+      setTime(getTime());
+    }
+  }, [isRunning, isPaused, getTime]);
 
   // Define fetchSubjects function
   const fetchSubjects = useCallback(async () => {
