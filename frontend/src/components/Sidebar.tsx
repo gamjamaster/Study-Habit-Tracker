@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"; // hook to know the current path
 import { useState } from "react"; // React state hook
 import { useRouter } from "next/navigation"; // Add router import
 import { useAuth } from "@/contexts/AuthContext"; // import auth context
+import { useTimer } from "@/contexts/TimerContext"; // import timer context
 // bring necessary icons from heroicons lib
 import {
   ChartBarIcon,
@@ -36,9 +37,21 @@ const navItems = [
 // make a responsive sidebar component
 export default function Sidebar() {
   const { user, signOut } = useAuth();
+  const { time, isRunning } = useTimer();
   const pathname = usePathname(); // store the directory of the current page in the pathname variable
   const router = useRouter(); // Add router hook
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // mobile menu state
+
+  // Format time for display
+  const formatTime = (seconds: number) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    if (hrs > 0) {
+      return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   return (
     <>
@@ -84,7 +97,7 @@ export default function Sidebar() {
               key={item.href} // an unique key is needed to render a react list
               href={item.href} // path to redirect to when clicked
               onClick={() => setIsMobileMenuOpen(false)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition relative
                 ${
                   pathname?.startsWith(item.href) // if the current page (pathname) and href of the menu are the same, apply the style below
                     ? "bg-blue-600 text-white"
@@ -95,6 +108,13 @@ export default function Sidebar() {
               <item.icon className="w-6 h-6 flex-shrink-0" />
               {/* display menu names */}
               <span className="font-medium">{item.name}</span>
+              {/* Timer indicator */}
+              {item.name === "Timer" && isRunning && (
+                <span className="ml-auto flex items-center gap-2">
+                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                  <span className="text-xs font-mono">{formatTime(time)}</span>
+                </span>
+              )}
             </Link>
           ))}
         </nav>

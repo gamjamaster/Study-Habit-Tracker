@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { PlayIcon, PauseIcon, StopIcon, ClockIcon } from '@heroicons/react/24/solid';
 import { API_ENDPOINTS } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTimer } from '@/contexts/TimerContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 interface Subject {
@@ -13,41 +14,21 @@ interface Subject {
 
 function TimerContent() {
   const { session } = useAuth();
-  const [time, setTime] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
+  const { 
+    time, 
+    isRunning, 
+    isPaused, 
+    selectedSubject, 
+    startTimer: globalStartTimer,
+    pauseTimer: globalPauseTimer,
+    stopTimer: globalStopTimer,
+    setSelectedSubject,
+    resetTimer
+  } = useTimer();
+  
   const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [selectedSubject, setSelectedSubject] = useState('');
   const [saving, setSaving] = useState(false);
   const [isStopping, setIsStopping] = useState(false); // Prevent double-click on Stop
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Load timer state from localStorage on component mount
-  useEffect(() => {
-    const savedTimerState = localStorage.getItem('timerState');
-    if (savedTimerState) {
-      try {
-        const { time: savedTime, isRunning: savedIsRunning, isPaused: savedIsPaused, selectedSubject: savedSubject } = JSON.parse(savedTimerState);
-        setTime(savedTime || 0);
-        setIsRunning(savedIsRunning || false);
-        setIsPaused(savedIsPaused || false);
-        setSelectedSubject(savedSubject || '');
-      } catch (error) {
-        console.error('Error loading timer state from localStorage:', error);
-      }
-    }
-  }, []);
-
-  // Save timer state to localStorage whenever it changes
-  useEffect(() => {
-    const timerState = {
-      time,
-      isRunning,
-      isPaused,
-      selectedSubject
-    };
-    localStorage.setItem('timerState', JSON.stringify(timerState));
-  }, [time, isRunning, isPaused, selectedSubject]);
 
   // Define fetchSubjects function
   const fetchSubjects = useCallback(async () => {
@@ -86,40 +67,20 @@ function TimerContent() {
     };
   }, []);
 
-  // Timer logic
-  useEffect(() => {
-    if (isRunning && !isPaused) {
-      intervalRef.current = setInterval(() => {
-        setTime(prevTime => prevTime + 1);
-      }, 1000);
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [isRunning, isPaused]);
-
   const startTimer = () => {
     if (!selectedSubject) {
       alert('Please select a subject first!');
       return;
     }
-    setIsRunning(true);
-    setIsPaused(false);
+    globalStartTimer();
   };
 
   const pauseTimer = () => {
-    setIsPaused(true);
+    globalPauseTimer();
   };
 
   const resumeTimer = () => {
-    setIsPaused(false);
+    globalStartTimer();
   };
 
   const stopTimer = async () => {
@@ -156,13 +117,8 @@ function TimerContent() {
         }
       }
 
-      // Reset timer state
-      setIsRunning(false);
-      setIsPaused(false);
-      setTime(0);
-      setSelectedSubject('');
-      // Clear timer state from localStorage when stopped
-      localStorage.removeItem('timerState');
+      // Reset timer state using context
+      resetTimer();
     } catch (error) {
       console.error('Error in stopTimer:', error);
       alert('Error stopping timer: Network error');
@@ -203,10 +159,7 @@ function TimerContent() {
 
       if (response.ok) {
         alert('Study session saved successfully!');
-        setTime(0);
-        setSelectedSubject('');
-        // Clear timer state from localStorage after saving
-        localStorage.removeItem('timerState');
+        resetTimer();
       } else {
         const errorData = await response.json();
         console.error('Server error:', errorData);
