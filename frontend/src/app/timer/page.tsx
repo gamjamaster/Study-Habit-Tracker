@@ -324,7 +324,7 @@ function TimerContent() {
               {isPaused ? (
                 <button
                   onClick={resumeTimer}
-                  className="group flex items-center px-4 sm:px-6 py-2 sm:py-3 bg-green-500 hover:bg-green-600 text-white rounded-full font-bold text-sm sm:text-base transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
+                  className="group flex items-center px-4 sm:px-6 py-2 sm:py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-full font-bold text-sm sm:text-base transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
                 >
                   <PlayIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 group-hover:scale-110 transition-transform" />
                   <span className="hidden sm:inline">RESUME</span>
@@ -332,7 +332,7 @@ function TimerContent() {
               ) : (
                 <button
                   onClick={pauseTimer}
-                  className="group flex items-center px-4 sm:px-6 py-2 sm:py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-full font-bold text-sm sm:text-base transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
+                  className="group flex items-center px-4 sm:px-6 py-2 sm:py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-full font-bold text-sm sm:text-base transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
                 >
                   <PauseIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 group-hover:scale-110 transition-transform" />
                   <span className="hidden sm:inline">PAUSE</span>
@@ -341,7 +341,7 @@ function TimerContent() {
               <button
                 onClick={stopTimer}
                 disabled={isStopping}
-                className="group flex items-center px-4 sm:px-6 py-2 sm:py-3 bg-red-500 hover:bg-red-600 text-white rounded-full font-bold text-sm sm:text-base transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="group flex items-center px-4 sm:px-6 py-2 sm:py-3 bg-gray-800 hover:bg-gray-900 text-white rounded-full font-bold text-sm sm:text-base transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 <StopIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 group-hover:scale-110 transition-transform" />
                 <span className="hidden sm:inline">{isStopping ? 'STOPPING...' : 'STOP'}</span>
@@ -354,7 +354,7 @@ function TimerContent() {
             <button
               onClick={saveSession}
               disabled={saving}
-              className="group flex items-center px-4 sm:px-6 py-2 sm:py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-full font-bold text-sm sm:text-base transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="group flex items-center px-4 sm:px-6 py-2 sm:py-3 bg-gray-700 hover:bg-gray-800 text-white rounded-full font-bold text-sm sm:text-base transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               <ClockIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 group-hover:rotate-12 transition-transform" />
               <span className="hidden sm:inline">{saving ? "SAVING..." : "SAVE"}</span>

@@ -46,7 +46,7 @@ function GroupDetailContent() {
   const { user, session } = useAuth();
   const [group, setGroup] = useState<StudyGroup | null>(null);
   const [leaderboard, setLeaderboard] = useState<GroupLeaderboardResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setLoading] = useState(true);
   const [leaving, setLeaving] = useState(false);
 
   const groupId = params.id as string;
@@ -155,16 +155,12 @@ function GroupDetailContent() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
+  if(isLoading) return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <span className="ml-3 text-gray-600">Loading...</span>
       </div>
     );
-  }
 
   if (!group || !leaderboard) {
     return (

@@ -160,7 +160,7 @@ export default function MyCalendar() { // Function component for the calendar
                   const subject = subjects.find(s => s.id === session.subject_id);
                   return (
                     <div key={session.id} className="p-3 bg-blue-50 rounded-lg">
-                      <div className="font-medium text-blue-800">
+                      <div className="font-bold text-blue-800">
                         {subject?.name || 'Unknown Subject'}
                       </div>
                       <div className="text-sm text-blue-600">

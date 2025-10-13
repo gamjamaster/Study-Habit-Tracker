@@ -342,21 +342,21 @@ function HabitContent() {
     <div className="py-4 sm:py-6 lg:py-8 lg:-ml-60 lg:pl-60">
       <div className="max-w-2xl mx-auto px-4 sm:px-6">
         {/* page title */}
-        <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-gray-900 text-center">✅ My Habits</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-gray-900 text-center">My Habits</h1>
         
         {/* habit addition card */}
         <div className="bg-white rounded-xl shadow p-4 sm:p-6 mb-6">
           <h2 className="text-base sm:text-lg font-semibold mb-4 text-gray-700">Add New Habit</h2>
           <div className="flex flex-col sm:flex-row gap-3">
             <input
-              className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-sm sm:text-base"
+              className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 text-sm sm:text-base"
               placeholder="Enter a new habit (e.g., Exercise, Reading)"
               value={newHabit}
               onChange={e => setNewHabit(e.target.value)}
               onKeyDown={e => e.key === "Enter" && addHabit()}
             />
             <button
-              className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-6 py-3 flex items-center justify-center font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-gray-800 hover:bg-gray-900 text-white rounded-lg px-6 py-3 flex items-center justify-center font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={addHabit}
               disabled={isAdding}
             >

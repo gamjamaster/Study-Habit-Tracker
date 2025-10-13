@@ -20,7 +20,7 @@ interface StudyGroup {
 function GroupsContent() {
   const { user, session } = useAuth();
   const [groups, setGroups] = useState<StudyGroup[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newGroup, setNewGroup] = useState({ name: "", description: "" });
   const [creating, setCreating] = useState(false);
@@ -135,16 +135,12 @@ function GroupsContent() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
+  if(isLoading) return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <span className="ml-3 text-gray-600">Loading...</span>
       </div>
     );
-  }
 
   return (
     <div className="py-4 sm:py-6 lg:py-8 lg:-ml-60 lg:pl-60">

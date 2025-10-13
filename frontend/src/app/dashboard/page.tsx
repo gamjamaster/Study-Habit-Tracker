@@ -85,6 +85,7 @@ function DashboardContent(){
         <span className="ml-3 text-gray-600">Loading...</span>
       </div>
     );
+    
   if(error) return <div className = "p-8 text-center text-red-400">{error.message}</div>;
   if(!summary) return null;
 
