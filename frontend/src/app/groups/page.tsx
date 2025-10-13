@@ -139,7 +139,7 @@ function GroupsContent() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700"></div>
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
@@ -153,12 +153,12 @@ function GroupsContent() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold mb-2">📚 Study Groups</h1>
+            <h1 className="text-3xl font-bold mb-2">Study Groups</h1>
             <p className="text-gray-600">Create and join study groups to compete with friends</p>
           </div>
           <button
             onClick={() => setShowCreateForm(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+            className="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg flex items-center gap-2"
           >
             <PlusIcon className="w-5 h-5" />
             Create Group
@@ -180,7 +180,7 @@ function GroupsContent() {
                     type="text"
                     value={newGroup.name}
                     onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
                     placeholder="Enter group name"
                   />
                 </div>
@@ -192,7 +192,7 @@ function GroupsContent() {
                   <textarea
                     value={newGroup.description}
                     onChange={(e) => setNewGroup({ ...newGroup, description: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
                     placeholder="Describe your study group"
                     rows={3}
                   />
@@ -209,7 +209,7 @@ function GroupsContent() {
                 <button
                   onClick={createGroup}
                   disabled={creating}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg disabled:opacity-50"
+                  className="flex-1 bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg disabled:opacity-50"
                 >
                   {creating ? "Creating..." : "Create Group"}
                 </button>
@@ -221,12 +221,12 @@ function GroupsContent() {
         {/* Groups Grid */}
         {groups.length === 0 ? (
           <div className="bg-white rounded-xl shadow p-12 text-center">
-            <div className="text-6xl mb-4">👥</div>
+            <div className="text-6xl mb-4">📖</div>
             <h3 className="text-xl font-semibold text-gray-600 mb-2">No Study Groups Yet</h3>
             <p className="text-gray-500 mb-6">Create your first study group to start competing with friends!</p>
             <button
               onClick={() => setShowCreateForm(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg inline-flex items-center gap-2"
+              className="bg-gray-800 hover:bg-gray-900 text-white px-6 py-3 rounded-lg inline-flex items-center gap-2"
             >
               <PlusIcon className="w-5 h-5" />
               Create Your First Group
@@ -254,7 +254,7 @@ function GroupsContent() {
                 <div className="space-y-2">
                   <Link
                     href={`/groups/${group.id}`}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-center block"
+                    className="w-full bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg text-center block"
                   >
                     View Group
                   </Link>
@@ -291,7 +291,7 @@ function GroupsContent() {
           </p>
           <Link
             href="/groups/join"
-            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg inline-flex items-center gap-2"
+            className="bg-gray-800 hover:bg-gray-900 text-white px-6 py-3 rounded-lg inline-flex items-center gap-2"
           >
             <UsersIcon className="w-5 h-5" />
             Join Group

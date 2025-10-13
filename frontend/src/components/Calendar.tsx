@@ -151,8 +151,8 @@ export default function MyCalendar() { // Function component for the calendar
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Study Sessions */}
           <div className="bg-white rounded-xl shadow p-6">
-            <h3 className="text-lg font-semibold mb-4 text-blue-600 flex items-center">
-              📚 Study Sessions
+            <h3 className="text-lg font-semibold mb-4 text-black-600 flex items-center">
+              Study Sessions
             </h3>
             {dayStudySessions.length > 0 ? (
               <div className="space-y-3">
@@ -189,8 +189,8 @@ export default function MyCalendar() { // Function component for the calendar
 
           {/* Habit Logs */}
           <div className="bg-white rounded-xl shadow p-6">
-            <h3 className="text-lg font-semibold mb-4 text-green-600 flex items-center">
-              ✅ Habits
+            <h3 className="text-lg font-semibold mb-4 text-black-600 flex items-center">
+              Habits
             </h3>
             {dayHabitLogs.length > 0 ? (
               <div className="space-y-3">

@@ -30,6 +30,17 @@ type DashboardData = {
 function DashboardContent(){
   const {user, session} = useAuth() // Get current user info and session
 
+  // Format minutes to hours and minutes
+  const formatTime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    
+    if (hours > 0) {
+      return { display: `${hours}h ${mins}m`, label: `${hours} hour${hours > 1 ? 's' : ''} ${mins} minute${mins !== 1 ? 's' : ''}` };
+    }
+    return { display: `${mins}m`, label: `${mins} minute${mins !== 1 ? 's' : ''}` };
+  };
+
   // Use React Query for API data caching and optimization
   const { data: summary, isLoading, error, refetch } = useQuery<DashboardData>({
     queryKey: ['dashboard-summary', user?.id], // Include user ID in cache key
@@ -87,7 +98,7 @@ function DashboardContent(){
           <button
             onClick={handleRefresh}
             disabled={isLoading}
-            className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-xs sm:text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 mx-auto sm:mx-0"
+            className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-lg text-xs sm:text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 mx-auto sm:mx-0"
             title="Refresh dashboard data"
           >
             🔄 {isLoading ? 'Loading...' : 'Refresh'}
@@ -97,24 +108,24 @@ function DashboardContent(){
         {/* summary cards */}
         <div className="grid gap-4 sm:gap-6 md:grid-cols-2 mb-6 sm:mb-8">
           {/* study time card */}
-          <div className="bg-blue-50 rounded-xl shadow p-4 sm:p-6 flex flex-col items-center">
-            <ChartBarIcon className="w-8 h-8 text-blue-600 mb-3" />
-            <h3 className="text-lg font-bold text-blue-700 mb-2">Today&apos;s Study Time</h3>
-            <div className="text-3xl font-bold text-blue-800 mb-1">
-              {summary.study_today}
+          <div className="bg-white border-2 border-gray-200 rounded-xl shadow p-4 sm:p-6 flex flex-col items-center">
+            <ChartBarIcon className="w-8 h-8 text-gray-900 mb-3" />
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Today&apos;s Study Time</h3>
+            <div className="text-3xl font-bold text-black mb-1">
+              {formatTime(summary.study_today).display}
             </div>
-            <div className="text-sm text-blue-600 mb-2">minutes</div>
+            <div className="text-sm text-gray-600 mb-2">{formatTime(summary.study_today).label}</div>
           </div>
 
           {/* habit card */}
-          <div className="bg-green-50 rounded-xl shadow p-4 sm:p-6 flex flex-col items-center">
-            <CheckCircleIcon className="w-8 h-8 text-green-600 mb-3" />
-            <h3 className="text-lg font-bold text-green-700 mb-2">Today&apos;s Habits</h3>
-            <div className="text-3xl font-bold text-green-800 mb-1">
+          <div className="bg-gray-50 border-2 border-gray-200 rounded-xl shadow p-4 sm:p-6 flex flex-col items-center">
+            <CheckCircleIcon className="w-8 h-8 text-gray-900 mb-3" />
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Today&apos;s Habits</h3>
+            <div className="text-3xl font-bold text-black mb-1">
               {summary.habit_done} / {summary.habit_total}
             </div>
-            <div className="text-sm text-green-600 mb-2">habits</div>
-            <div className="text-lg font-semibold text-green-700">{summary.habit_percent}% Achieved</div>
+            <div className="text-sm text-gray-600 mb-2">habits</div>
+            <div className="text-lg font-semibold text-gray-900">{summary.habit_percent}% Achieved</div>
           </div>
         </div>
 

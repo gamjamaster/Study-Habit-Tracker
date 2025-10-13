@@ -149,7 +149,7 @@ function PersonalDataContent() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">📊 Personal Data Analytics</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">📋 Personal Data Analytics</h1>
           
           {/* Period Selector */}
           <div className="flex gap-2">

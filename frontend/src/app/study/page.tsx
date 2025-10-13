@@ -224,7 +224,7 @@ function StudyContent() {
 
   if (loading) return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700"></div>
         <span className="ml-3 text-gray-600">Loading...</span>
       </div>
     );
@@ -232,17 +232,17 @@ function StudyContent() {
     <div className="py-4 sm:py-6 lg:py-8 lg:-ml-60 lg:pl-60">
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         {/* page title */}
-        <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-gray-900 text-center">📚 Study Tracker</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-gray-900 text-center">Study Tracker</h1>
         
         {/* study log addition card */}
         <div className="bg-white rounded-xl shadow p-4 sm:p-6 mb-6">
           <h2 className="text-base sm:text-lg font-semibold mb-4 text-gray-700 flex items-center">
-            <PlusIcon className="w-5 h-5 mr-2 text-blue-500" />
+            <PlusIcon className="w-5 h-5 mr-2 text-gray-900" />
             Add Study Session
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <select
-              className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-sm sm:text-base"
+              className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 text-sm sm:text-base"
               value={newLog.subject_id}
               onChange={e => setNewLog({ ...newLog, subject_id: e.target.value })}
             >
@@ -252,7 +252,7 @@ function StudyContent() {
               ))}
             </select>
             <input
-              className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-sm sm:text-base"
+              className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 text-sm sm:text-base"
               placeholder="Minutes"
               type="number"
               min="1"
@@ -260,13 +260,13 @@ function StudyContent() {
               onChange={e => setNewLog({ ...newLog, minutes: e.target.value })}
             />
             <input
-              className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-sm sm:text-base sm:col-span-2 lg:col-span-1"
+              className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 text-sm sm:text-base sm:col-span-2 lg:col-span-1"
               placeholder="Notes (optional)"
               value={newLog.note}
               onChange={e => setNewLog({ ...newLog, note: e.target.value })}
             />
             <button 
-              className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-6 py-3 flex items-center justify-center font-medium transition-colors sm:col-span-2 lg:col-span-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-gray-800 hover:bg-gray-900 text-white rounded-lg px-6 py-3 flex items-center justify-center font-medium transition-colors sm:col-span-2 lg:col-span-1 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={addLog}
               disabled={isSaving}
             >
@@ -279,19 +279,19 @@ function StudyContent() {
         {logs.length > 0 ? (
           <div className="bg-white rounded-xl shadow p-6">
             <h2 className="text-lg font-semibold mb-4 text-gray-700 flex items-center">
-              <BookOpenIcon className="w-5 h-5 mr-2 text-blue-500" />
+              <BookOpenIcon className="w-5 h-5 mr-2 text-gray-900" />
               Study Records ({logs.length})
             </h2>
             <div className="space-y-3">
               {logs.map(log => (
-                <div key={log.id} className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                <div key={log.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <span className="font-semibold text-blue-800 text-lg">
+                        <span className="font-semibold text-gray-900 text-lg">
                           {log.subject_name || subjects.find(s => s.id === log.subject_id)?.name || "Unknown Subject"}
                         </span>
-                        <span className="bg-blue-200 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                        <span className="bg-gray-200 text-gray-900 px-3 py-1 rounded-full text-sm font-medium">
                           {log.duration_minutes} min
                         </span>
                       </div>
@@ -314,10 +314,10 @@ function StudyContent() {
               ))}
             </div>
             {/* total study time summary */}
-            <div className="mt-4 pt-4 border-t border-blue-200">
+            <div className="mt-4 pt-4 border-t border-gray-200">
               <div className="text-center">
-                <span className="text-blue-700 font-semibold">
-                  📊 Total: {logs.reduce((sum, log) => sum + log.duration_minutes, 0)} minutes today
+                <span className="text-gray-900 font-semibold">
+                  Total: {logs.reduce((sum, log) => sum + log.duration_minutes, 0)} minutes today
                 </span>
               </div>
             </div>
@@ -325,10 +325,10 @@ function StudyContent() {
         ) : (
           <div className="bg-white rounded-xl shadow p-8 text-center">
             <div className="text-gray-400 mb-4">
-              <span className="text-4xl">📖</span>
+              <span className="text-4xl">💻</span>
             </div>
-            <h3 className="text-lg font-medium text-gray-600 mb-2">No study records yet</h3>
-            <p className="text-gray-500">Add your first study session above to start tracking!</p>
+            <h3 className="text-lg font-bold text-gray-600 mb-2">No study records yet</h3>
+            <p className="text-gray-500 font-bold">Add your first study session above to start tracking!</p>
           </div>
         )}
 

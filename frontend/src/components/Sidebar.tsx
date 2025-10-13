@@ -111,7 +111,7 @@ export default function Sidebar() {
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition relative
                 ${
                   pathname?.startsWith(item.href) // if the current page (pathname) and href of the menu are the same, apply the style below
-                    ? "bg-blue-600 text-white"
+                    ? "bg-gray-700 text-white"
                     : "hover:bg-gray-800 text-gray-200"
                 }`}
             >

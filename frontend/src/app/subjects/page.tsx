@@ -150,7 +150,7 @@ function SubjectsContent() {
     // conditional rendering: show loading message if data is still being fetched
     if (loading) return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700"></div>
         <span className="ml-3 text-gray-600">Loading...</span>
       </div>
     );
@@ -177,7 +177,7 @@ function SubjectsContent() {
                             setEditingSubject(null); // clear editing state
                             setShowForm(!showForm); // toggle showForm state when clicked
                         }}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-colors w-full sm:w-auto"
+                        className="bg-gray-800 hover:bg-gray-900 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-colors w-full sm:w-auto"
                     >
                         {/* conditional text based on form visibility state */}
                         {showForm ? "Cancel" : "Add New Subject"}
@@ -219,17 +219,17 @@ function SubjectsContent() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         
                         {/* total subjects count card */}
-                        <div className="text-center p-4 bg-blue-50 rounded-lg">
+                        <div className="text-center p-4 bg-gray-50 rounded-lg border border-gray-200">
                             {/* large number showing total subject count */}
-                            <p className="text-2xl font-bold text-blue-600">{subjects.length}</p>
+                            <p className="text-2xl font-bold text-gray-900">{subjects.length}</p>
                             {/* label for the statistic */}
                             <p className="text-gray-600">Total Subjects</p>
                         </div>
                         
                         {/* subjects added this week card */}
-                        <div className="text-center p-4 bg-green-50 rounded-lg">
+                        <div className="text-center p-4 bg-gray-50 rounded-lg border border-gray-200">
                             {/* calculate and display subjects created in the last 7 days */}
-                            <p className="text-2xl font-bold text-green-600">
+                            <p className="text-2xl font-bold text-gray-900">
                                 {subjects.filter(subject => 
                                     // filter subjects created within the last 7 days (7 * 24 * 60 * 60 * 1000 milliseconds)
                                     new Date(subject.created_at).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000
@@ -240,9 +240,9 @@ function SubjectsContent() {
                         </div>
                         
                         {/* unique colors used card */}
-                        <div className="text-center p-4 bg-purple-50 rounded-lg">
+                        <div className="text-center p-4 bg-gray-50 rounded-lg border border-gray-200">
                             {/* count unique colors by creating Set from color array to remove duplicates */}
-                            <p className="text-2xl font-bold text-purple-600">
+                            <p className="text-2xl font-bold text-gray-900">
                                 {new Set(subjects.map(s => s.color)).size} {/* Set automatically removes duplicates, size gives count */}
                             </p>
                             {/* label for colors used */}
