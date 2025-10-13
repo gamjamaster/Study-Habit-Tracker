@@ -21,6 +21,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState('');
+  const [startTimestamp, setStartTimestamp] = useState<number | null>(null); // Track when timer started
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load timer state from localStorage on mount
@@ -33,15 +34,18 @@ export function TimerProvider({ children }: { children: ReactNode }) {
           isRunning: savedIsRunning, 
           isPaused: savedIsPaused, 
           selectedSubject: savedSubject,
-          lastUpdated
+          startTimestamp: savedStartTimestamp
         } = JSON.parse(savedTimerState);
         
-        // Calculate elapsed time if timer was running
-        if (savedIsRunning && !savedIsPaused && lastUpdated) {
-          const elapsed = Math.floor((Date.now() - lastUpdated) / 1000);
-          setTime((savedTime || 0) + elapsed);
+        // Calculate actual elapsed time if timer was running
+        if (savedIsRunning && !savedIsPaused && savedStartTimestamp) {
+          const now = Date.now();
+          const totalElapsed = Math.floor((now - savedStartTimestamp) / 1000);
+          setTime(totalElapsed);
+          setStartTimestamp(savedStartTimestamp);
         } else {
           setTime(savedTime || 0);
+          setStartTimestamp(savedStartTimestamp || null);
         }
         
         setIsRunning(savedIsRunning || false);
@@ -60,16 +64,19 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       isRunning,
       isPaused,
       selectedSubject,
-      lastUpdated: Date.now()
+      startTimestamp
     };
     localStorage.setItem('timerState', JSON.stringify(timerState));
-  }, [time, isRunning, isPaused, selectedSubject]);
+  }, [time, isRunning, isPaused, selectedSubject, startTimestamp]);
 
-  // Timer interval - runs in background
+  // Timer interval - runs in background and calculates accurate time
   useEffect(() => {
-    if (isRunning && !isPaused) {
+    if (isRunning && !isPaused && startTimestamp) {
+      // Calculate accurate time every second based on start timestamp
       intervalRef.current = setInterval(() => {
-        setTime(prevTime => prevTime + 1);
+        const now = Date.now();
+        const elapsed = Math.floor((now - startTimestamp) / 1000);
+        setTime(elapsed);
       }, 1000);
     } else {
       if (intervalRef.current) {
@@ -83,9 +90,15 @@ export function TimerProvider({ children }: { children: ReactNode }) {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isRunning, isPaused]);
+  }, [isRunning, isPaused, startTimestamp]);
 
   const startTimer = () => {
+    // Only set start timestamp if timer is being started fresh
+    if (!isRunning || isPaused) {
+      if (!startTimestamp) {
+        setStartTimestamp(Date.now());
+      }
+    }
     setIsRunning(true);
     setIsPaused(false);
   };
@@ -104,6 +117,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     setIsRunning(false);
     setIsPaused(false);
     setSelectedSubject('');
+    setStartTimestamp(null);
     localStorage.removeItem('timerState');
   };
 
