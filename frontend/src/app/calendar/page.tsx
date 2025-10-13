@@ -9,7 +9,7 @@ import ProtectedRoute from "@/components/ProtectedRoute"; // import protected ro
 const Calendar = dynamic(() => import("@/components/Calendar"), {
   loading: () => (
     <div className="flex justify-center items-center h-96">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-700"></div>
       <span className="ml-2 text-gray-600">Loading calendar...</span>
     </div>
   ),
@@ -20,7 +20,7 @@ const Calendar = dynamic(() => import("@/components/Calendar"), {
 const ActivityHeatmap = dynamic(() => import("@/components/ActivityHeatmap"), {
   loading: () => (
     <div className="flex justify-center items-center h-96">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-700"></div>
       <span className="ml-2 text-gray-600">Loading heatmap...</span>
     </div>
   ),
@@ -55,7 +55,7 @@ function CalendarContent() {
             onClick={() => setViewMode("calendar")}
             className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors ${
               viewMode === "calendar"
-                ? "bg-blue-600 text-white"
+                ? "bg-gray-800 text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
@@ -66,7 +66,7 @@ function CalendarContent() {
             onClick={() => setViewMode("heatmap")}
             className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors ${
               viewMode === "heatmap"
-                ? "bg-green-600 text-white"
+                ? "bg-gray-800 text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >

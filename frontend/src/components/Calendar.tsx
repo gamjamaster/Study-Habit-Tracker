@@ -116,7 +116,7 @@ export default function MyCalendar() { // Function component for the calendar
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700"></div>
         <span className="ml-3 text-gray-600">Loading...</span>
       </div>
     );
@@ -151,19 +151,19 @@ export default function MyCalendar() { // Function component for the calendar
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Study Sessions */}
           <div className="bg-white rounded-xl shadow p-6">
-            <h3 className="text-lg font-semibold mb-4 text-black-600 flex items-center">
-              Study Sessions
+            <h3 className="text-lg font-semibold mb-4 text-blue-800 flex items-center">
+              📚 Study Sessions
             </h3>
             {dayStudySessions.length > 0 ? (
               <div className="space-y-3">
                 {dayStudySessions.map((session) => {
                   const subject = subjects.find(s => s.id === session.subject_id);
                   return (
-                    <div key={session.id} className="p-3 bg-blue-50 rounded-lg">
-                      <div className="font-bold text-blue-800">
+                    <div key={session.id} className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="font-bold text-blue-900">
                         {subject?.name || 'Unknown Subject'}
                       </div>
-                      <div className="text-sm text-blue-600">
+                      <div className="text-sm text-blue-700">
                         Duration: {session.duration_minutes} minutes
                       </div>
                       {session.notes && (
@@ -189,8 +189,8 @@ export default function MyCalendar() { // Function component for the calendar
 
           {/* Habit Logs */}
           <div className="bg-white rounded-xl shadow p-6">
-            <h3 className="text-lg font-semibold mb-4 text-black-600 flex items-center">
-              Habits
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 flex items-center">
+              ✅ Habits
             </h3>
             {dayHabitLogs.length > 0 ? (
               <div className="space-y-3">
@@ -199,11 +199,11 @@ export default function MyCalendar() { // Function component for the calendar
                   .map((log) => {
                     const habit = habits.find(h => h.id === log.habit_id);
                     return (
-                      <div key={log.id} className="p-3 bg-green-50 rounded-lg">
-                        <div className="font-medium text-green-800">
+                      <div key={log.id} className="p-3 bg-gray-100 rounded-lg border border-gray-300">
+                        <div className="font-medium text-gray-900">
                           {habit?.name}
                         </div>
-                        <div className="text-sm text-green-600">
+                        <div className="text-sm text-gray-800">
                           ✅ Completed
                         </div>
                         <div className="text-xs text-gray-500 mt-1">

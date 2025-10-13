@@ -46,20 +46,23 @@ export default function WeeklyChart({ token }: WeeklyChartProps) {
 
       const data = await response.json();
 
+      // Convert habit data: 1 habit = 60 minutes (1 hour) for equal height
+      const habitDataInMinutes = data.habit_data.map((count: number) => count * 60);
+
       // convert the data into Chart.js format
       setChartData({
         labels: data.labels,
         datasets: [
           {
-            label: "Study Time",
+            label: "Study Time (minutes)",
             data: data.study_data,
-            backgroundColor: "rgba(75,85,99,0.5)",
+            backgroundColor: "rgba(30,64,175,0.8)", // dark blue
             borderRadius: 6,
           },
           {
-            label: "Habit Achieved (Number)",
-            data: data.habit_data,
-            backgroundColor: "rgba(107,114,128,0.5)",
+            label: "Habits Completed (as hours)",
+            data: habitDataInMinutes,
+            backgroundColor: "rgba(0,0,0,0.8)", // black
             borderRadius: 6,
           },
         ],
@@ -72,15 +75,15 @@ export default function WeeklyChart({ token }: WeeklyChartProps) {
         labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
         datasets: [
           {
-            label: "Study Time",
+            label: "Study Time (minutes)",
             data: [0,0,0,0,0,0,0],
-            backgroundColor: "rgba(75,85,99,0.5)",
+            backgroundColor: "rgba(30,64,175,0.8)", // dark blue
             borderRadius: 6,
           },
           {
-            label: "Habit Achieved (Number)",
+            label: "Habits Completed (as hours)",
             data: [0,0,0,0,0,0,0],
-            backgroundColor: "rgba(107,114,128,0.5)",
+            backgroundColor: "rgba(0,0,0,0.8)", // black
             borderRadius: 6,
           },
         ],
@@ -134,11 +137,14 @@ const getChartOptions = (formatTime: (minutes: number) => string) => ({
             label += ': ';
           }
           
-          // Format study time as hours and minutes
-          if (context.dataset.label === 'Study Time') {
+          // Format both as time (since habits are now in minutes too)
+          if (context.dataset.label === 'Study Time (minutes)') {
             label += formatTime(context.parsed.y);
+          } else if (context.dataset.label === 'Habits Completed (as hours)') {
+            // Convert back to habit count for display
+            const habitCount = Math.round(context.parsed.y / 60);
+            label += `${habitCount} habit${habitCount !== 1 ? 's' : ''} (${formatTime(context.parsed.y)})`;
           } else {
-            // For habit count, just show the number
             label += context.parsed.y;
           }
           
