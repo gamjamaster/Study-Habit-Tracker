@@ -22,6 +22,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   const [isPaused, setIsPaused] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState('');
   const [startTimestamp, setStartTimestamp] = useState<number | null>(null);
+  const [pausedTime, setPausedTime] = useState(0); // 일시정지 시 경과 시간 저장
   const [, setForceUpdate] = useState(0); // Sidebar 업데이트용
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -34,13 +35,15 @@ export function TimerProvider({ children }: { children: ReactNode }) {
           isRunning: savedIsRunning, 
           isPaused: savedIsPaused, 
           selectedSubject: savedSubject,
-          startTimestamp: savedStartTimestamp
+          startTimestamp: savedStartTimestamp,
+          pausedTime: savedPausedTime
         } = JSON.parse(savedTimerState);
         
         setIsRunning(savedIsRunning || false);
         setIsPaused(savedIsPaused || false);
         setSelectedSubject(savedSubject || '');
         setStartTimestamp(savedStartTimestamp || null);
+        setPausedTime(savedPausedTime || 0);
       } catch (error) {
         console.error('Error loading timer state from localStorage:', error);
       }
@@ -53,19 +56,24 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       isRunning,
       isPaused,
       selectedSubject,
-      startTimestamp
+      startTimestamp,
+      pausedTime
     };
     localStorage.setItem('timerState', JSON.stringify(timerState));
-  }, [isRunning, isPaused, selectedSubject, startTimestamp]); // time 제거!
+  }, [isRunning, isPaused, selectedSubject, startTimestamp, pausedTime]);
 
   // 시간 계산 함수 - 호출할 때만 계산
   const getTime = useCallback((): number => {
-    if (startTimestamp && isRunning && !isPaused) {
+    if (isPaused) {
+      // 일시정지 상태일 때는 저장된 시간 반환
+      return pausedTime;
+    }
+    if (startTimestamp && isRunning) {
       const now = Date.now();
       return Math.floor((now - startTimestamp) / 1000);
     }
     return 0;
-  }, [startTimestamp, isRunning, isPaused]);
+  }, [startTimestamp, isRunning, isPaused, pausedTime]);
 
   // Timer interval - Sidebar 업데이트용으로만 사용 (1초에 1번)
   useEffect(() => {
@@ -90,17 +98,27 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   const startTimer = useCallback(() => {
     // Only set start timestamp if timer is being started fresh
     if (!isRunning || isPaused) {
-      if (!startTimestamp) {
+      if (isPaused) {
+        // 일시정지 해제: 현재 시간에서 일시정지된 시간만큼 빼서 startTimestamp 재조정
+        setStartTimestamp(Date.now() - pausedTime * 1000);
+        setPausedTime(0);
+      } else if (!startTimestamp) {
+        // 처음 시작: 현재 시간을 startTimestamp로 설정
         setStartTimestamp(Date.now());
       }
     }
     setIsRunning(true);
     setIsPaused(false);
-  }, [isRunning, isPaused, startTimestamp]);
+  }, [isRunning, isPaused, startTimestamp, pausedTime]);
 
   const pauseTimer = useCallback(() => {
+    // 일시정지 시 현재까지의 경과 시간 저장
+    if (startTimestamp && isRunning) {
+      const elapsed = Math.floor((Date.now() - startTimestamp) / 1000);
+      setPausedTime(elapsed);
+    }
     setIsPaused(true);
-  }, []);
+  }, [startTimestamp, isRunning]);
 
   const stopTimer = useCallback(() => {
     setIsRunning(false);
@@ -112,6 +130,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     setIsPaused(false);
     setSelectedSubject('');
     setStartTimestamp(null);
+    setPausedTime(0);
     localStorage.removeItem('timerState');
   }, []);
 

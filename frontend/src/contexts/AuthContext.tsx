@@ -117,6 +117,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               window.localStorage.removeItem(key)
             }
           })
+          
+          // Clear timer state on logout
+          window.localStorage.removeItem('timerState')
         } catch (error) {
           console.error('Error clearing localStorage:', error)
         }
