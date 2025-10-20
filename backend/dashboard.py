@@ -4,9 +4,10 @@ from sqlalchemy import func, text
 from database import get_db
 from auth import get_current_user
 import models
-from datetime import date
+from datetime import date, datetime
 from datetime import timedelta
 from cache import cache_manager
+from zoneinfo import ZoneInfo
 
 router = APIRouter()
 
@@ -24,7 +25,9 @@ def dashboard_summary(
         if cached_data:
             return cached_data
 
-        today = date.today()
+        # Get current date in Pacific/Fiji timezone
+        fiji_tz = ZoneInfo("Pacific/Fiji")
+        today = datetime.now(fiji_tz).date()
 
         # Get today's study time for the current user (Pacific/Fiji timezone)
         study_today = db.query(func.sum(models.StudySession.duration_minutes))\
@@ -64,7 +67,9 @@ def dashboard_weekly(
     db: Session = Depends(get_db)
 ):
     try:
-        today = date.today()
+        # Get current date in Pacific/Fiji timezone
+        fiji_tz = ZoneInfo("Pacific/Fiji")
+        today = datetime.now(fiji_tz).date()
 
         weekly_data = []  # list for saving weekly data
         day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]  # list for days
