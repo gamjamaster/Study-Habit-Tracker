@@ -26,17 +26,17 @@ def dashboard_summary(
 
         today = date.today()
 
-        # Get today's study time for the current user (simplified timezone handling)
+        # Get today's study time for the current user (Pacific/Fiji timezone)
         study_today = db.query(func.sum(models.StudySession.duration_minutes))\
             .filter(models.StudySession.user_id == user_id)\
-            .filter(func.date(models.StudySession.created_at) == today)\
+            .filter(func.date(text("created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific/Fiji'")) == today)\
             .scalar() or 0
 
-        # Count unique habit completions for today (user's habits only)
+        # Count unique habit completions for today (user's habits only, Pacific/Fiji timezone)
         habit_done = db.query(func.count(func.distinct(models.HabitLog.habit_id)))\
             .join(models.Habit, models.HabitLog.habit_id == models.Habit.id)\
             .filter(models.Habit.user_id == user_id)\
-            .filter(func.date(models.HabitLog.completed_date) == today)\
+            .filter(func.date(text("completed_date AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific/Fiji'")) == today)\
             .scalar() or 0
 
         # Count total habits for the current user
