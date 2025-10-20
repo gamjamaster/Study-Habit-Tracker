@@ -4,10 +4,9 @@ from sqlalchemy import func, text
 from database import get_db
 from auth import get_current_user
 import models
-from datetime import date, datetime
+from datetime import date
 from datetime import timedelta
 from cache import cache_manager
-from zoneinfo import ZoneInfo
 
 router = APIRouter()
 
@@ -25,21 +24,19 @@ def dashboard_summary(
         if cached_data:
             return cached_data
 
-        # Get current date in Pacific/Fiji timezone
-        fiji_tz = ZoneInfo("Pacific/Fiji")
-        today = datetime.now(fiji_tz).date()
+        today = date.today()
 
-        # Get today's study time for the current user (Pacific/Fiji timezone)
+        # Get today's study time for the current user (simplified timezone handling)
         study_today = db.query(func.sum(models.StudySession.duration_minutes))\
             .filter(models.StudySession.user_id == user_id)\
-            .filter(func.date(text("created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific/Fiji'")) == today)\
+            .filter(func.date(models.StudySession.created_at) == today)\
             .scalar() or 0
 
-        # Count unique habit completions for today (user's habits only, Pacific/Fiji timezone)
+        # Count unique habit completions for today (user's habits only)
         habit_done = db.query(func.count(func.distinct(models.HabitLog.habit_id)))\
             .join(models.Habit, models.HabitLog.habit_id == models.Habit.id)\
             .filter(models.Habit.user_id == user_id)\
-            .filter(func.date(text("completed_date AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific/Fiji'")) == today)\
+            .filter(func.date(models.HabitLog.completed_date) == today)\
             .scalar() or 0
 
         # Count total habits for the current user
@@ -67,9 +64,7 @@ def dashboard_weekly(
     db: Session = Depends(get_db)
 ):
     try:
-        # Get current date in Pacific/Fiji timezone
-        fiji_tz = ZoneInfo("Pacific/Fiji")
-        today = datetime.now(fiji_tz).date()
+        today = date.today()
 
         weekly_data = []  # list for saving weekly data
         day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]  # list for days
@@ -77,19 +72,16 @@ def dashboard_weekly(
         for i in range(6,-1,-1):  # iterate till today from 6 days ago
             target_date = today - timedelta(days=i)  # calculate the date
 
-            # load the total study time for that day for current user only
+            # load the total study time for that day based on created_at date
             study_time = db.query(func.sum(models.StudySession.duration_minutes))\
-                .filter(func.date(text("created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific/Fiji'")) == target_date)\
+                .filter(func.date(models.StudySession.created_at) == target_date)\
                 .filter(models.StudySession.user_id == user_id)\
                 .scalar() or 0 
             
-            # load the habit achievement for that day for current user only
-            # Use both UTC date and local date to handle timezone issues
+            # load the habit achievement for that day based on completed_date
             habit_count = db.query(func.count(func.distinct(models.HabitLog.habit_id)))\
                 .join(models.Habit, models.HabitLog.habit_id == models.Habit.id)\
-                .filter(
-                    func.date(text("completed_date AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific/Fiji'")) == target_date
-                )\
+                .filter(func.date(models.HabitLog.completed_date) == target_date)\
                 .filter(models.Habit.user_id == user_id)\
                 .scalar() or 0  
             
